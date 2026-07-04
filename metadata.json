@@ -1,0 +1,8 @@
+{
+  "name": "Downtime Analyzer",
+  "description": "AI-powered manufacturing downtime and root cause analyzer correlating PLC alarms, operator logs, and maintenance events.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
