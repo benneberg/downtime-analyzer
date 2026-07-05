@@ -1,68 +1,62 @@
 # Downtime Analyzer (Factory Insight AI)
 
-An AI-powered manufacturing analytics platform that combines PLC alarms, operator logs, maintenance records, and production events to identify the true root causes of equipment downtime.
-
-## 🚀 Features implemented in this React application
-
-1. **Multi-Source Data Ingestion**:
-   - Simulated upload and real-time validation of PLC Alarms (CSV), Operator Logs (JSON/Excel style), and Maintenance Event data.
-   - Includes sample industrial datasets (e.g., Bottling Line Jam, Packaging Heat Sealer Overheat, Conveyor Motor Overload) ready to load instantly.
-
-2. **Data Normalization Engine**:
-   - Converts disparate timestamps from operator records, PLC raw logs, and maintenance logs into consistent **UTC ISO-8601** timestamps.
-
-3. **Time-Series Timeline Alignment**:
-   - Correlates operator notes, nearest alarms (precursors), maintenance response, and the overall machinery production state.
-   - Highlights exact sequence of events before, during, and after downtime.
-
-4. **Precursor Detection**:
-   - Statistically scans timestamps to identify alarms and faults that occurred consistently **2 minutes**, **5 minutes**, or **10 minutes** before the actual machine stoppage.
-
-5. **AI Root Cause Report (Gemini API Integration)**:
-   - Uses `gemini-3.5-flash` server-side to generate:
-     - **Executive Summary**
-     - **5 Whys Analysis** (Industrial standard problem-solving framework)
-     - **Likely Root Causes**
-     - **Recommended Preventive Actions (CAPA)**
-
-6. **Interactive Timeline Dashboard**:
-   - Visualizes stops, alarms, and operator annotations with color-coded severity.
-   - Features rich charts utilizing `recharts` for fault frequencies, downtime duration analysis, and heatmaps.
-   - Interactive timeline zoom and detail popovers.
+## Overview
+The **Downtime Analyzer** (Factory Insight AI) is an advanced full-stack manufacturing analytics platform that combines real-time PLC alarms, operator logs, maintenance records, and production events to identify the true root causes of equipment downtime. It solves expensive manufacturing bottlenecks by correlating disparate data streams and generating structured "5 Whys" reports via `gemini-3.5-flash`.
 
 ---
 
-## 🛠️ Tech Stack
+## Installation
 
-- **Frontend**: React 19, TypeScript, Tailwind CSS, Lucide Icons, Recharts (Industrial dashboards), Motion (for fluid micro-interactions).
-- **Backend**: Express (Custom server for secure Gemini API key handling, server-side data correlation, and analysis).
-- **AI Integration**: Google `@google/genai` SDK using `gemini-3.5-flash`.
+1. **Clone and Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Configure Environment Secrets**:
+   Create a `.env` file or set the secret in your container environment:
+   ```env
+   GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+   ```
 
 ---
 
-## 💻 Getting Started
+## Usage
 
-### 1. Configure the API Key
-Set up your Gemini API key in the **Settings > Secrets** panel in AI Studio:
-```env
-GEMINI_API_KEY="YOUR_API_KEY_HERE"
-```
+1. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
+   This boots the backend Express server on port `3000` with the live Vite asset pipeline enabled.
 
-### 2. Development Setup
-Run the development server:
-```bash
-npm run dev
-```
+2. **Core Workflows**:
+   - **Load Sandbox Scenarios**: Click on any of the preconfigured industrial incidents (Bottling Line Jam, Thermal Sealer Runaway, Conveyor Motor Overload) to load detailed cross-system test datasets.
+   - **Upload Custom Logs**: Drag-and-drop CSV or JSON logs into the tabular data hub. The engine automatically maps and normalizes column headers.
+   - **Identify Precursors**: View the statistics tab to identify indicators occurring `< 2m`, `< 5m`, or `< 10m` before equipment stoppage.
+   - **Generate Root-Cause Reports**: Direct server-side call prompts the Gemini model to synthesize all telemetry data, providing a complete "5 Whys" narrative.
 
-The application runs a full-stack Express + Vite environment. All API calls are securely proxy-routed through the Express backend on port `3000`.
+---
 
-### 3. Production Build
-Build the optimized frontend assets and bundle the server using `esbuild`:
-```bash
-npm run build
-```
+## Testing
 
-Start the production server:
-```bash
-npm run start
-```
+1. **Type and Lint Verification**:
+   Verify types and lint configurations using TypeScript:
+   ```bash
+   npm run lint
+   ```
+
+---
+
+## Build / Deploy
+
+1. **Production Compilation**:
+   Compile frontend assets and bundle the server into a single production CommonJS target:
+   ```bash
+   npm run build
+   ```
+
+2. **Run Production Container**:
+   Boot the compiled container web service:
+   ```bash
+   npm run start
+   ```
+   The backend server automatically binds to port `3000` on host `0.0.0.0`, serving static files from `dist/` and proxying API endpoints.
