@@ -13,6 +13,13 @@ const PORT = 3000;
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Endpoint: Check Gemini API Key Configuration Status
+app.get("/api/key-status", (req, res) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const isConfigured = !!apiKey && apiKey !== "MY_GEMINI_API_KEY" && apiKey !== "";
+  return res.json({ configured: isConfigured });
+});
+
 // Endpoint: AI-powered Downtime Root Cause Analysis
 app.post("/api/analyze", async (req, res) => {
   const { plcAlarms, operatorLogs, maintenanceEvents, productionStops } = req.body;

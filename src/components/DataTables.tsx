@@ -128,36 +128,96 @@ export default function DataTables({
       if (!text) return;
 
       try {
-        if (file.name.endsWith(".json")) {
-          const parsed = JSON.parse(text);
-          // JSON parsing and automated structural loading
-          if (Array.isArray(parsed)) {
-            ingestArray(parsed);
-          } else {
-            alert("JSON file must be an array of objects.");
-          }
-        } else {
-          // Simple CSV/Excel style parsing
-          const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
-          if (lines.length < 2) return;
+        // Set up an inline Web Worker using a Blob URL to offload parsing
+        const workerScript = `
+          self.onmessage = function(e) {
+            const { text, fileName } = e.data;
+            try {
+              if (fileName.endsWith(".json")) {
+                const parsed = JSON.parse(text);
+                self.postMessage({ success: true, data: parsed, isJson: true });
+              } else {
+                const lines = text.split("\\n").map(l => l.trim()).filter(l => l.length > 0);
+                if (lines.length < 2) {
+                  self.postMessage({ success: true, data: [], isJson: false });
+                  return;
+                }
 
-          const headers = lines[0].toLowerCase().split(",").map((h) => h.trim().replace(/['"]/g, ""));
-          const parsedRows = lines.slice(1).map((line) => {
-            const values = line.split(",").map((v) => v.trim().replace(/['"]/g, ""));
-            const obj: { [key: string]: string } = {};
-            headers.forEach((h, idx) => {
-              if (values[idx] !== undefined) {
-                obj[h] = values[idx];
+                const headers = lines[0].toLowerCase().split(",").map(h => h.trim().replace(/['"]/g, ""));
+                const parsedRows = lines.slice(1).map(line => {
+                  const values = line.split(",").map(v => v.trim().replace(/['"]/g, ""));
+                  const obj = {};
+                  headers.forEach((h, idx) => {
+                    if (values[idx] !== undefined) {
+                      obj[h] = values[idx];
+                    }
+                  });
+                  return obj;
+                });
+
+                self.postMessage({ success: true, data: parsedRows, isJson: false });
               }
-            });
-            return obj;
-          });
+            } catch (err) {
+              self.postMessage({ success: false, error: err.message });
+            }
+          };
+        `;
 
-          ingestArray(parsedRows);
-        }
+        const blob = new Blob([workerScript], { type: "application/javascript" });
+        const workerUrl = URL.createObjectURL(blob);
+        const worker = new Worker(workerUrl);
+
+        worker.onmessage = (e) => {
+          // Clean up worker resources
+          URL.revokeObjectURL(workerUrl);
+          worker.terminate();
+
+          const { success, data, error, isJson } = e.data;
+          if (success) {
+            if (isJson && !Array.isArray(data)) {
+              alert("JSON file must be an array of objects.");
+            } else {
+              ingestArray(data);
+            }
+          } else {
+            alert("Parsing error inside Web Worker: " + error);
+          }
+        };
+
+        worker.postMessage({ text, fileName: file.name });
       } catch (err) {
-        console.error(err);
-        alert("Failed to parse file. Ensure it is a valid PLC CSV or JSON stream.");
+        console.warn("Blob Worker setup failed, falling back to synchronous parsing in main thread:", err);
+        // Fallback parsing logic on main thread
+        try {
+          if (file.name.endsWith(".json")) {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+              ingestArray(parsed);
+            } else {
+              alert("JSON file must be an array of objects.");
+            }
+          } else {
+            const lines = text.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+            if (lines.length < 2) return;
+
+            const headers = lines[0].toLowerCase().split(",").map((h) => h.trim().replace(/['"]/g, ""));
+            const parsedRows = lines.slice(1).map((line) => {
+              const values = line.split(",").map((v) => v.trim().replace(/['"]/g, ""));
+              const obj: { [key: string]: string } = {};
+              headers.forEach((h, idx) => {
+                if (values[idx] !== undefined) {
+                  obj[h] = values[idx];
+                }
+              });
+              return obj;
+            });
+
+            ingestArray(parsedRows);
+          }
+        } catch (fallbackErr) {
+          console.error(fallbackErr);
+          alert("Failed to parse file. Ensure it is a valid PLC CSV or JSON stream.");
+        }
       }
     };
     reader.readAsText(file);

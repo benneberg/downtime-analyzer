@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { INDUSTRIAL_SCENARIOS, Scenario, PLCAlarm, OperatorLog, MaintenanceEvent, ProductionStop } from "./data/scenarios";
 import ScenarioSelector from "./components/ScenarioSelector";
 import DashboardCharts from "./components/DashboardCharts";
@@ -7,7 +7,7 @@ import TimelineAlignment from "./components/TimelineAlignment";
 import DataTables from "./components/DataTables";
 import RootCauseReport from "./components/RootCauseReport";
 import PricingPlans from "./components/PricingPlans";
-import { Activity, ShieldAlert, Cpu, BarChart3, HelpCircle } from "lucide-react";
+import { Activity, ShieldAlert, Cpu, BarChart3, HelpCircle, AlertCircle, KeyRound, X } from "lucide-react";
 
 export default function App() {
   // Initialize with the first scenario (Bottling Line) to provide a rich out-of-the-box experience
@@ -18,6 +18,26 @@ export default function App() {
   const [operatorLogs, setOperatorLogs] = useState<OperatorLog[]>(defaultScenario.operatorLogs);
   const [maintenanceEvents, setMaintenanceEvents] = useState<MaintenanceEvent[]>(defaultScenario.maintenanceEvents);
   const [productionStops, setProductionStops] = useState<ProductionStop[]>(defaultScenario.productionStops);
+
+  // API key configuration guard state
+  const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean | null>(null);
+  const [showKeyWarning, setShowKeyWarning] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetch("/api/key-status")
+      .then((res) => res.json())
+      .then((data) => {
+        setApiKeyConfigured(data.configured);
+        if (data.configured === false) {
+          setShowKeyWarning(true);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch key status:", err);
+        setApiKeyConfigured(false);
+        setShowKeyWarning(true);
+      });
+  }, []);
 
   // Triggered when a user clicks a preloaded scenario
   const handleSelectScenario = (scenario: Scenario) => {
@@ -68,6 +88,37 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+        {showKeyWarning && (
+          <div className="bg-[#1c1417] border border-rose-500/30 rounded-sm p-4 text-xs text-rose-300 relative overflow-hidden shadow-md">
+            <div className="absolute right-2 top-2">
+              <button 
+                onClick={() => setShowKeyWarning(false)}
+                className="text-slate-500 hover:text-slate-300 p-1 rounded-sm hover:bg-slate-800/40 transition cursor-pointer"
+                title="Dismiss warning"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex items-start gap-3 pr-6">
+              <div className="bg-rose-500/10 p-2 rounded-sm border border-rose-500/20 text-rose-400 shrink-0">
+                <KeyRound className="h-5 w-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="font-bold text-rose-200 uppercase tracking-wider flex items-center gap-1.5">
+                  Gemini API Key Required for Live AI Analysis
+                </h4>
+                <p className="mt-1 leading-relaxed text-[11px] text-slate-300">
+                  The <strong className="text-amber-500 font-mono">GEMINI_API_KEY</strong> environment variable is currently not configured or is set to a placeholder value in this environment.
+                </p>
+                <ul className="mt-2 list-disc list-inside space-y-1 text-[11px] text-slate-400">
+                  <li>You can still fully use all interactive offline features, timelines, precursor algorithms, and metrics below.</li>
+                  <li>To run real-time AI root-cause analysis, set the <strong className="text-white">GEMINI_API_KEY</strong> under the <strong className="text-white">Settings &gt; Secrets</strong> panel of Google AI Studio and then click reload.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Scenario Selection Section */}
         <section id="scenarios-section">
           <ScenarioSelector

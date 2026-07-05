@@ -47,6 +47,46 @@ export default function RootCauseReport({
     "Generating corrective and preventive (CAPA) actions..."
   ];
 
+  // Create a unique cache key based on the contents of the inputs
+  const getCacheKey = () => {
+    const dataString = JSON.stringify({
+      plc: plcAlarms.map((a) => ({ id: a.id, timestamp: a.timestamp })),
+      op: operatorLogs.map((o) => ({ id: o.id, timestamp: o.timestamp })),
+      maint: maintenanceEvents.map((m) => ({ id: m.id, timestamp: m.timestamp })),
+      stops: productionStops.map((s) => ({ id: s.id, startTime: s.startTime })),
+    });
+    let hash = 0;
+    for (let i = 0; i < dataString.length; i++) {
+      const char = dataString.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return `downtime_report_cache_${hash}`;
+  };
+
+  // Restore cached report if this specific dataset scenario combination was analyzed before
+  useEffect(() => {
+    if (plcAlarms.length === 0) {
+      setReport(null);
+      setError(null);
+      return;
+    }
+    const key = getCacheKey();
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      try {
+        setReport(JSON.parse(cached));
+        setError(null);
+      } catch (e) {
+        localStorage.removeItem(key);
+        setReport(null);
+      }
+    } else {
+      setReport(null);
+      setError(null);
+    }
+  }, [plcAlarms, operatorLogs, maintenanceEvents, productionStops]);
+
   useEffect(() => {
     let interval: any;
     if (loading) {
@@ -66,16 +106,16 @@ export default function RootCauseReport({
 
     try {
       const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          plcAlarms,
-          operatorLogs,
-          maintenanceEvents,
-          productionStops,
-        }),
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify({
+           plcAlarms,
+           operatorLogs,
+           maintenanceEvents,
+           productionStops,
+         }),
       });
 
       const data = await response.json();
@@ -85,6 +125,8 @@ export default function RootCauseReport({
 
       if (data.report) {
         setReport(data.report);
+        const key = getCacheKey();
+        localStorage.setItem(key, JSON.stringify(data.report));
       } else {
         throw new Error("Invalid response format received from server.");
       }

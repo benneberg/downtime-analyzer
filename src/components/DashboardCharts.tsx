@@ -8,10 +8,23 @@ interface DashboardChartsProps {
 }
 
 export default function DashboardCharts({ plcAlarms, productionStops }: DashboardChartsProps) {
+  // Decimate/Downsample array if it is too large to keep page frame rates steady at 60fps on desktop/mobile
+  const decimateAlarms = (alarms: PLCAlarm[], maxElements = 1000): PLCAlarm[] => {
+    if (alarms.length <= maxElements) return alarms;
+    const step = Math.ceil(alarms.length / maxElements);
+    const decimated: PLCAlarm[] = [];
+    for (let i = 0; i < alarms.length; i += step) {
+      decimated.push(alarms[i]);
+    }
+    return decimated;
+  };
+
+  const decimatedAlarms = decimateAlarms(plcAlarms);
+
   // 1. Calculate chatty alarms tag frequency
   const getTagFrequencyData = () => {
     const counts: { [key: string]: number } = {};
-    plcAlarms.forEach((a) => {
+    decimatedAlarms.forEach((a) => {
       counts[a.tag] = (counts[a.tag] || 0) + 1;
     });
 
@@ -27,7 +40,7 @@ export default function DashboardCharts({ plcAlarms, productionStops }: Dashboar
     let warning = 0;
     let info = 0;
 
-    plcAlarms.forEach((a) => {
+    decimatedAlarms.forEach((a) => {
       if (a.severity === "CRITICAL") critical++;
       else if (a.severity === "WARNING") warning++;
       else info++;

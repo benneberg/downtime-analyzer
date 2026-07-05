@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { PLCAlarm, OperatorLog, MaintenanceEvent, ProductionStop } from "../data/scenarios";
-import { Clock, ShieldAlert, User, Wrench, AlertTriangle, ArrowRight } from "lucide-react";
+import { Clock, ShieldAlert, User, Wrench, AlertTriangle, ArrowRight, Download, Printer, X, FileSpreadsheet } from "lucide-react";
 
 interface TimelineAlignmentProps {
   plcAlarms: PLCAlarm[];
@@ -25,6 +26,8 @@ export default function TimelineAlignment({
   maintenanceEvents,
   productionStops,
 }: TimelineAlignmentProps) {
+  const [showPrintModal, setShowPrintModal] = useState(false);
+
   // Combine, parse, and sort events chronologically
   const getCombinedTimeline = (): TimelineEvent[] => {
     const events: TimelineEvent[] = [];
@@ -112,6 +115,20 @@ export default function TimelineAlignment({
 
   const timelineEvents = getCombinedTimeline();
 
+  const exportJSON = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(timelineEvents, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "downtime_timeline_sequence.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const triggerPrint = () => {
+    window.print();
+  };
+
   const getRelativeBadge = (offset?: number) => {
     if (offset === undefined) return null;
     if (offset === 0) {
@@ -197,14 +214,36 @@ export default function TimelineAlignment({
 
   return (
     <div className="bg-[#16191f] rounded-sm border border-industrial p-5 mt-6 shadow-sm">
-      <div className="mb-6">
-        <h2 className="font-display text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-tight">
-          <Clock className="h-4 w-4 text-amber-500" />
-          Sequence-of-Events Correlation Timeline
-        </h2>
-        <p className="text-[11px] text-slate-400">
-          Chronologically sorted cross-system correlation of PLC alarms, shift handovers, and technician events with downtime offset.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-industrial/60">
+        <div>
+          <h2 className="font-display text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-tight">
+            <Clock className="h-4 w-4 text-amber-500" />
+            Sequence-of-Events Correlation Timeline
+          </h2>
+          <p className="text-[11px] text-slate-400">
+            Chronologically sorted cross-system correlation of PLC alarms, shift handovers, and technician events with downtime offset.
+          </p>
+        </div>
+        {timelineEvents.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={exportJSON}
+              className="bg-[#1c2026] hover:bg-slate-800 text-slate-200 border border-industrial text-[10px] font-bold font-mono py-1.5 px-3 rounded-sm transition cursor-pointer flex items-center gap-1.5 uppercase"
+              title="Download raw JSON timeline"
+            >
+              <Download className="h-3.5 w-3.5 text-amber-500" />
+              Export JSON
+            </button>
+            <button
+              onClick={() => setShowPrintModal(true)}
+              className="bg-[#1c2026] hover:bg-slate-800 text-slate-200 border border-industrial text-[10px] font-bold font-mono py-1.5 px-3 rounded-sm transition cursor-pointer flex items-center gap-1.5 uppercase"
+              title="Print analytical PDF report"
+            >
+              <Printer className="h-3.5 w-3.5 text-amber-500" />
+              Print PDF Report
+            </button>
+          </div>
+        )}
       </div>
 
       {timelineEvents.length === 0 ? (
@@ -252,6 +291,112 @@ export default function TimelineAlignment({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Analytical Print PDF Preview Modal */}
+      {showPrintModal && (
+        <div className="fixed inset-0 bg-[#0c0e12]/95 backdrop-blur-sm z-50 overflow-y-auto p-4 sm:p-6 md:p-10 flex justify-center items-start">
+          <div className="bg-white text-slate-900 rounded-sm w-full max-w-4xl p-8 shadow-2xl relative border border-slate-300 print:border-none print:shadow-none my-8 print:my-0">
+            {/* Modal Controls - Hidden during real print */}
+            <div className="flex justify-between items-center pb-4 mb-6 border-b border-slate-200 print:hidden">
+              <div className="flex items-center gap-2">
+                <Printer className="h-5 w-5 text-amber-600" />
+                <span className="font-bold text-slate-800 uppercase text-xs tracking-wider font-display">Print / Save PDF Report Preview</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={triggerPrint}
+                  className="bg-amber-500 hover:bg-amber-600 text-black font-semibold text-xs py-2 px-4 rounded-sm transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print / Save PDF
+                </button>
+                <button
+                  onClick={() => setShowPrintModal(false)}
+                  className="border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs py-2 px-4 rounded-sm transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <X className="h-4 w-4" />
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Report Content */}
+            <div className="space-y-6 text-slate-900 print:text-black">
+              {/* Report Header */}
+              <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4">
+                <div>
+                  <h1 className="text-2xl font-bold font-display uppercase tracking-tight">DOWNTIME ANALYZER REPORT</h1>
+                  <p className="text-xs text-slate-500 font-mono mt-1">INDUSTRIAL CORRELATION & CHRONOLOGICAL SEQUENCE</p>
+                </div>
+                <div className="text-right font-mono text-xs text-slate-600">
+                  <p>GENERATE DATE: {new Date().toLocaleDateString()} UTC</p>
+                  <p>SYSTEM STATUS: ALIGNED SEQUENCE</p>
+                </div>
+              </div>
+
+              {/* Statistics Overview Grid */}
+              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-sm font-mono text-xs">
+                <div>
+                  <span className="text-slate-500 block uppercase font-bold text-[10px]">TOTAL CHRONO EVENTS</span>
+                  <span className="text-base font-bold">{timelineEvents.length} Logs</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block uppercase font-bold text-[10px]">PLC ALARMS FILTERED</span>
+                  <span className="text-base font-bold">{plcAlarms.length} Events</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block uppercase font-bold text-[10px]">STOPS RECORDED</span>
+                  <span className="text-base font-bold">{productionStops.length} Breaks</span>
+                </div>
+              </div>
+
+              {/* Event Table */}
+              <div className="space-y-3">
+                <h3 className="font-display font-bold text-sm uppercase tracking-wider text-slate-800 border-b border-slate-300 pb-1">Aligned Chronicle Sequence Table</h3>
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-slate-400 font-mono text-[10px] text-slate-600 uppercase">
+                      <th className="py-2 w-[15%]">Timestamp</th>
+                      <th className="py-2 w-[15%]">System / Class</th>
+                      <th className="py-2 w-[20%]">Signal Tag / ID</th>
+                      <th className="py-2 w-[40%]">Event Details & Description</th>
+                      <th className="py-2 w-[10%] text-right">Offset</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {timelineEvents.map((ev) => {
+                      const timeStr = new Date(ev.timestamp).toISOString().replace("T", " ").substring(0, 19);
+                      return (
+                        <tr key={ev.id} className="border-b border-slate-200 hover:bg-slate-50">
+                          <td className="py-2 font-mono text-[10px] text-slate-600">{timeStr}</td>
+                          <td className="py-2 font-bold text-slate-700">{ev.type}</td>
+                          <td className="py-2 font-mono font-semibold text-amber-700">{ev.tagOrUserOrTech}</td>
+                          <td className="py-2 text-slate-800">{ev.title} - {ev.description}</td>
+                          <td className="py-2 text-right font-mono text-[10px] text-slate-600">
+                            {ev.relativeOffsetMinutes !== undefined
+                              ? ev.relativeOffsetMinutes === 0
+                                ? "T-0"
+                                : ev.relativeOffsetMinutes < 0
+                                  ? `${ev.relativeOffsetMinutes}m`
+                                  : `+${ev.relativeOffsetMinutes}m`
+                              : "N/A"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Report Footer */}
+              <div className="pt-8 border-t border-slate-200 text-[10px] text-slate-400 font-mono flex justify-between">
+                <span>Downtime Analyzer / Factory Insight AI System Report</span>
+                <span>Page 1 of 1</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
