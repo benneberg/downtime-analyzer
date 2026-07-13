@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PLCAlarm, OperatorLog, MaintenanceEvent, ProductionStop } from "../data/scenarios";
-import { Clock, ShieldAlert, User, Wrench, AlertTriangle, ArrowRight, Download, Printer, X, FileSpreadsheet } from "lucide-react";
+import { Clock, ShieldAlert, User, Wrench, AlertTriangle, ArrowRight, Download, Printer, X, FileSpreadsheet, Play, Pause, RotateCcw, Gauge, Activity, Flame } from "lucide-react";
 
 interface TimelineAlignmentProps {
   plcAlarms: PLCAlarm[];
@@ -27,6 +27,17 @@ export default function TimelineAlignment({
   productionStops,
 }: TimelineAlignmentProps) {
   const [showPrintModal, setShowPrintModal] = useState(false);
+
+  // Replay Controller States
+  const [replayIndex, setReplayIndex] = useState<number>(-1);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [replaySpeed, setReplaySpeed] = useState(1000); // step interval in ms
+
+  // Reset replay on scenario/data change
+  useEffect(() => {
+    setReplayIndex(-1);
+    setIsReplaying(false);
+  }, [plcAlarms, operatorLogs, maintenanceEvents, productionStops]);
 
   // Combine, parse, and sort events chronologically
   const getCombinedTimeline = (): TimelineEvent[] => {
@@ -114,6 +125,67 @@ export default function TimelineAlignment({
   };
 
   const timelineEvents = getCombinedTimeline();
+
+  // Playback increment effect
+  useEffect(() => {
+    let timer: any = null;
+    if (isReplaying) {
+      if (replayIndex === -1) {
+        setReplayIndex(0);
+      } else if (replayIndex < timelineEvents.length - 1) {
+        timer = setTimeout(() => {
+          setReplayIndex((prev) => prev + 1);
+        }, replaySpeed);
+      } else {
+        setIsReplaying(false);
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isReplaying, replayIndex, replaySpeed, timelineEvents.length]);
+
+  // Calculate live statistics for the replay up to the current active index
+  const getReplayMetrics = () => {
+    const limitIndex = replayIndex === -1 ? timelineEvents.length - 1 : replayIndex;
+    const pastEvents = timelineEvents.slice(0, limitIndex + 1);
+    
+    let criticalCount = 0;
+    let warningCount = 0;
+    let plcCount = 0;
+    let operatorCount = 0;
+    let maintCount = 0;
+
+    pastEvents.forEach((ev) => {
+      if (ev.type === "PLC") {
+        plcCount++;
+        if (ev.severity === "CRITICAL") criticalCount++;
+        else if (ev.severity === "WARNING") warningCount++;
+      } else if (ev.type === "OPERATOR") {
+        operatorCount++;
+      } else if (ev.type === "MAINTENANCE") {
+        maintCount++;
+      }
+    });
+
+    const totalAlarms = plcCount;
+    const criticalRatio = totalAlarms > 0 ? Math.round((criticalCount / totalAlarms) * 100) : 0;
+    const warningRatio = totalAlarms > 0 ? Math.round((warningCount / totalAlarms) * 100) : 0;
+
+    return {
+      criticalCount,
+      warningCount,
+      plcCount,
+      operatorCount,
+      maintCount,
+      criticalRatio,
+      warningRatio,
+      currentActiveEvent: timelineEvents[limitIndex] || null,
+    };
+  };
+
+  const replayMetrics = getReplayMetrics();
+  const activeEventsShown = replayIndex === -1 ? timelineEvents : timelineEvents.slice(0, replayIndex + 1);
 
   const exportJSON = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(timelineEvents, null, 2));
@@ -246,6 +318,178 @@ export default function TimelineAlignment({
         )}
       </div>
 
+      {/* Interactive Timeline Replay Controller */}
+      {timelineEvents.length > 0 && (
+        <div className="bg-[#12151a] p-4 rounded-sm border border-industrial mb-6 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-industrial/50">
+            <div className="flex items-center gap-2">
+              <div className="bg-amber-500/10 p-2 rounded-sm border border-amber-500/20 text-amber-500">
+                <Gauge className="h-4 w-4 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold font-display uppercase tracking-wider text-slate-200">Interactive Timeline Replay Engine</h3>
+                <p className="text-[10px] text-slate-500">Replay historical incident logs step-by-step with synchronized telemetry gauges.</p>
+              </div>
+            </div>
+
+            {/* Playback Controls */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setIsReplaying(!isReplaying)}
+                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold font-mono uppercase rounded-sm border cursor-pointer transition ${
+                  isReplaying 
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/30 hover:bg-rose-500/30" 
+                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30"
+                }`}
+              >
+                {isReplaying ? (
+                  <>
+                    <Pause className="h-3 w-3" /> Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3 w-3" /> Play Replay
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setReplayIndex(0);
+                  setIsReplaying(false);
+                }}
+                className="bg-[#1c2026] text-slate-300 hover:text-slate-100 border border-industrial text-[10px] font-bold font-mono py-1 px-2.5 rounded-sm transition cursor-pointer uppercase flex items-center gap-1"
+                title="Restart from beginning"
+              >
+                <RotateCcw className="h-3 w-3" /> Reset
+              </button>
+
+              <button
+                onClick={() => {
+                  setReplayIndex(-1);
+                  setIsReplaying(false);
+                }}
+                className={`text-[10px] font-bold font-mono py-1 px-2.5 rounded-sm border transition cursor-pointer uppercase ${
+                  replayIndex === -1 
+                    ? "bg-amber-500 text-black border-amber-500" 
+                    : "bg-[#1c2026] text-slate-300 border-industrial hover:bg-slate-800"
+                }`}
+              >
+                Show All Logs
+              </button>
+
+              {/* Speed Buttons */}
+              <div className="flex items-center rounded-sm border border-industrial bg-[#12151a] overflow-hidden">
+                <span className="text-[9px] text-slate-500 px-2 font-mono uppercase">Speed:</span>
+                <button
+                  onClick={() => setReplaySpeed(1500)}
+                  className={`px-1.5 py-0.5 text-[9px] font-mono transition ${replaySpeed === 1500 ? "bg-amber-500 text-black font-bold" : "text-slate-400 hover:text-slate-200"}`}
+                >
+                  0.5x
+                </button>
+                <button
+                  onClick={() => setReplaySpeed(1000)}
+                  className={`px-1.5 py-0.5 text-[9px] font-mono border-l border-industrial transition ${replaySpeed === 1000 ? "bg-amber-500 text-black font-bold" : "text-slate-400 hover:text-slate-200"}`}
+                >
+                  1x
+                </button>
+                <button
+                  onClick={() => setReplaySpeed(400)}
+                  className={`px-1.5 py-0.5 text-[9px] font-mono border-l border-industrial transition ${replaySpeed === 400 ? "bg-amber-500 text-black font-bold" : "text-slate-400 hover:text-slate-200"}`}
+                >
+                  2.5x
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Slider Scrubber */}
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
+              <span className="flex items-center gap-1">
+                <Activity className="h-3 w-3 text-amber-500" />
+                Live Sequence Playback
+              </span>
+              <span className="text-amber-500 font-bold">
+                {replayIndex === -1 ? "ALL EVENTS ACTIVE" : `STEP ${replayIndex + 1} OF ${timelineEvents.length}`}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={timelineEvents.length - 1}
+              value={replayIndex === -1 ? timelineEvents.length - 1 : replayIndex}
+              onChange={(e) => {
+                setReplayIndex(parseInt(e.target.value));
+                setIsReplaying(false);
+              }}
+              className="w-full accent-amber-500 cursor-pointer bg-[#1c2026] h-2 rounded-lg appearance-none"
+            />
+          </div>
+
+          {/* Synchronized Telemetry Gauges Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Clock Gauge */}
+            <div className="bg-[#1c2026] p-3 rounded-sm border border-industrial/80 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block">Active Event Clock</span>
+              <div className="mt-1 text-xs font-mono font-bold text-slate-100 truncate">
+                {replayMetrics.currentActiveEvent
+                  ? new Date(replayMetrics.currentActiveEvent.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " UTC"
+                  : "N/A"}
+              </div>
+              <span className="text-[9px] text-slate-400 mt-1 truncate">
+                {replayMetrics.currentActiveEvent
+                  ? new Date(replayMetrics.currentActiveEvent.timestamp).toLocaleDateString()
+                  : "No Event Selected"}
+              </span>
+            </div>
+
+            {/* Severity Gauge */}
+            <div className="bg-[#1c2026] p-3 rounded-sm border border-industrial/80 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block">Threat Severity Ratio</span>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="w-full bg-[#12151a] h-1.5 rounded-full overflow-hidden flex">
+                  <div className="bg-rose-500 h-full" style={{ width: `${replayMetrics.criticalRatio}%` }} title={`Critical Alarms: ${replayMetrics.criticalRatio}%`} />
+                  <div className="bg-amber-500 h-full" style={{ width: `${replayMetrics.warningRatio}%` }} title={`Warning Alarms: ${replayMetrics.warningRatio}%`} />
+                  <div className="bg-slate-500 h-full" style={{ width: `${100 - (replayMetrics.criticalRatio + replayMetrics.warningRatio)}%` }} title="Info Logs" />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-slate-200 shrink-0">
+                  {replayMetrics.criticalRatio}% CRIT
+                </span>
+              </div>
+              <span className="text-[9px] text-slate-400 mt-1">
+                {replayMetrics.criticalCount} Critical, {replayMetrics.warningCount} Warnings Triggered
+              </span>
+            </div>
+
+            {/* Ingestion Stream Count */}
+            <div className="bg-[#1c2026] p-3 rounded-sm border border-industrial/80 flex flex-col justify-between">
+              <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block">Accumulated Streams</span>
+              <div className="mt-1 text-sm font-mono font-bold text-amber-500">
+                {replayMetrics.plcCount + replayMetrics.operatorCount + replayMetrics.maintCount} / {timelineEvents.length} Logs
+              </div>
+              <div className="flex gap-1.5 text-[8px] font-mono text-slate-400 mt-1">
+                <span className="text-amber-500">PLC:{replayMetrics.plcCount}</span>
+                <span className="text-blue-400">OP:{replayMetrics.operatorCount}</span>
+                <span className="text-green-400">MAINT:{replayMetrics.maintCount}</span>
+              </div>
+            </div>
+
+            {/* Real-time Status Card */}
+            <div className="bg-[#1c2026] p-3 rounded-sm border border-industrial/80 flex flex-col justify-between overflow-hidden">
+              <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block">Last Trigger Source</span>
+              <div className="mt-1 text-xs font-bold text-slate-200 truncate flex items-center gap-1">
+                {replayMetrics.currentActiveEvent?.type === "PLC" && <Flame className="h-3 w-3 text-rose-500 inline shrink-0" />}
+                {replayMetrics.currentActiveEvent?.tagOrUserOrTech || "STABLE"}
+              </div>
+              <span className="text-[9px] text-slate-400 mt-1 truncate">
+                {replayMetrics.currentActiveEvent?.title || "System in standby"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {timelineEvents.length === 0 ? (
         <div className="bg-[#12151a] p-8 rounded-sm border border-dashed border-industrial text-center text-xs text-slate-500">
           No logs available. Load a scenario or upload custom files to populate the aligned timeline.
@@ -258,7 +502,7 @@ export default function TimelineAlignment({
           </div>
 
           <div className="space-y-3">
-            {timelineEvents.map((ev) => {
+            {activeEventsShown.map((ev) => {
               const styles = getEventStyles(ev.type, ev.severity);
               const timeFormatted = new Date(ev.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 

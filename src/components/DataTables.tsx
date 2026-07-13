@@ -29,6 +29,15 @@ export default function DataTables({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
+  // Advanced CSV Cleaning Utility States
+  const [showCleaningRules, setShowCleaningRules] = useState(false);
+  const [customTagCol, setCustomTagCol] = useState("");
+  const [customMsgCol, setCustomMsgCol] = useState("");
+  const [customTimeCol, setCustomTimeCol] = useState("");
+  const [timezoneOffset, setTimezoneOffset] = useState<number>(0);
+  const [substitutionFrom, setSubstitutionFrom] = useState("");
+  const [substitutionTo, setSubstitutionTo] = useState("");
+
   // Form states for adding rows
   const [plcForm, setPlcForm] = useState({ tag: "", message: "", severity: "WARNING" as const, timestamp: "" });
   const [opForm, setOpForm] = useState({ operatorName: "", observation: "", machineryState: "RUNNING", timestamp: "" });
@@ -107,6 +116,10 @@ export default function DataTables({
       const parsed = new Date(input);
       if (isNaN(parsed.getTime())) {
         return getNowISO(); // Fallback if invalid
+      }
+      if (timezoneOffset !== 0) {
+        const offsetTime = new Date(parsed.getTime() + timezoneOffset * 60 * 60 * 1000);
+        return offsetTime.toISOString();
       }
       return parsed.toISOString();
     } catch {
@@ -228,49 +241,104 @@ export default function DataTables({
     const first = arr[0];
     if (!first) return;
 
+    // Helper to search row value with optional custom header fallback
+    const getValue = (row: any, standardKey: string, customKey: string) => {
+      let val = "";
+      if (customKey.trim() && customKey.trim() in row) {
+        val = row[customKey.trim()];
+      } else if (customKey.trim().toLowerCase() in row) {
+        val = row[customKey.trim().toLowerCase()];
+      } else if (standardKey in row) {
+        val = row[standardKey];
+      } else if (standardKey.toLowerCase() in row) {
+        val = row[standardKey.toLowerCase()];
+      }
+      
+      // Perform text replacement if configured
+      if (typeof val === "string" && substitutionFrom.trim() && substitutionTo.trim()) {
+        try {
+          const regex = new RegExp(substitutionFrom.trim(), "g");
+          val = val.replace(regex, substitutionTo.trim());
+        } catch (e) {
+          // If regex is invalid, do a literal search/replace
+          val = val.split(substitutionFrom.trim()).join(substitutionTo.trim());
+        }
+      }
+      return val;
+    };
+
     // Detect PLC Alarm
-    if ("tag" in first || "message" in first || "severity" in first) {
-      const newAlarms: PLCAlarm[] = arr.map((row, index) => ({
-        id: `plc_ingest_${index}_${Date.now()}`,
-        tag: (row.tag || "PLC_TAG").toUpperCase(),
-        message: row.message || row.alarm_message || "System Status Alert",
-        severity: (row.severity || "WARNING").toUpperCase() === "CRITICAL" ? "CRITICAL" : (row.severity || "WARNING").toUpperCase() === "INFO" ? "INFO" : "WARNING",
-        timestamp: normalizeTime(row.timestamp || row.time || row.date),
-      }));
+    const isPlc = "tag" in first || "message" in first || "severity" in first || 
+                  (customTagCol.trim() && customTagCol.trim() in first) ||
+                  (customMsgCol.trim() && customMsgCol.trim() in first);
+
+    if (isPlc) {
+      const newAlarms: PLCAlarm[] = arr.map((row, index) => {
+        const tag = getValue(row, "tag", customTagCol) || "PLC_TAG";
+        const message = getValue(row, "message", customMsgCol) || row.alarm_message || "System Status Alert";
+        const rawTime = getValue(row, "timestamp", customTimeCol) || row.time || row.date;
+        const severityRaw = getValue(row, "severity", "") || "WARNING";
+        const severity = severityRaw.toUpperCase() === "CRITICAL" ? "CRITICAL" : severityRaw.toUpperCase() === "INFO" ? "INFO" : "WARNING";
+
+        return {
+          id: `plc_ingest_${index}_${Date.now()}`,
+          tag: String(tag).toUpperCase(),
+          message: String(message),
+          severity,
+          timestamp: normalizeTime(String(rawTime)),
+        };
+      });
       setPlcAlarms((prev) => [...newAlarms, ...prev]);
       setActiveTab("plc");
     }
     // Detect Operator Log
     else if ("operator" in first || "observation" in first || "operatorname" in first) {
-      const newLogs: OperatorLog[] = arr.map((row, index) => ({
-        id: `op_ingest_${index}_${Date.now()}`,
-        operatorName: row.operator || row.operatorname || "External Import",
-        observation: row.observation || row.note || row.log || "No message",
-        machineryState: row.state || row.machinerystate || "RUNNING",
-        timestamp: normalizeTime(row.timestamp || row.time),
-      }));
+      const newLogs: OperatorLog[] = arr.map((row, index) => {
+        const opName = getValue(row, "operator", "") || row.operatorname || "External Import";
+        const observation = getValue(row, "observation", "") || row.note || row.log || "No message";
+        const rawTime = getValue(row, "timestamp", "") || row.time;
+
+        return {
+          id: `op_ingest_${index}_${Date.now()}`,
+          operatorName: String(opName),
+          observation: String(observation),
+          machineryState: row.state || row.machinerystate || "RUNNING",
+          timestamp: normalizeTime(String(rawTime)),
+        };
+      });
       setOperatorLogs((prev) => [...newLogs, ...prev]);
       setActiveTab("operator");
     }
     // Detect Maintenance Event
     else if ("technician" in first || "action" in first || "actiontaken" in first) {
-      const newMaint: MaintenanceEvent[] = arr.map((row, index) => ({
-        id: `maint_ingest_${index}_${Date.now()}`,
-        technician: row.technician || row.tech || "Contractor Team",
-        actionTaken: row.actiontaken || row.action || "Standard servicing",
-        partsReplaced: row.partsreplaced || row.parts || undefined,
-        status: (row.status || "Completed") === "Completed" ? "Completed" : "In-Progress",
-        timestamp: normalizeTime(row.timestamp || row.time),
-      }));
+      const newMaint: MaintenanceEvent[] = arr.map((row, index) => {
+        const tech = getValue(row, "technician", "") || row.tech || "Contractor Team";
+        const action = getValue(row, "actiontaken", "") || row.action || "Standard servicing";
+        const rawTime = getValue(row, "timestamp", "") || row.time;
+
+        return {
+          id: `maint_ingest_${index}_${Date.now()}`,
+          technician: String(tech),
+          actionTaken: String(action),
+          partsReplaced: row.partsreplaced || row.parts || undefined,
+          status: (row.status || "Completed") === "Completed" ? "Completed" : "In-Progress",
+          timestamp: normalizeTime(String(rawTime)),
+        };
+      });
       setMaintenanceEvents((prev) => [...newMaint, ...prev]);
       setActiveTab("maintenance");
     }
     // Detect Production Stop
     else if ("start" in first || "starttime" in first || "duration" in first) {
       const newStops: ProductionStop[] = arr.map((row, index) => {
-        const start = normalizeTime(row.start || row.starttime);
-        const end = row.end || row.endtime ? normalizeTime(row.end || row.endtime) : new Date(new Date(start).getTime() + (parseInt(row.duration || "15") * 60000)).toISOString();
-        const duration = parseInt(row.duration || row.durationminutes || "15");
+        const startRaw = getValue(row, "start", "") || row.starttime;
+        const endRaw = getValue(row, "end", "") || row.endtime;
+        const durationRaw = getValue(row, "duration", "") || row.durationminutes || "15";
+
+        const start = normalizeTime(String(startRaw));
+        const end = endRaw ? normalizeTime(String(endRaw)) : new Date(new Date(start).getTime() + (parseInt(String(durationRaw || "15")) * 60000)).toISOString();
+        const duration = parseInt(String(durationRaw));
+
         return {
           id: `stop_ingest_${index}_${Date.now()}`,
           startTime: start,
@@ -329,33 +397,162 @@ export default function DataTables({
           </p>
         </div>
 
-        {/* Drag and Drop File Uploader */}
-        <div
-          onDragEnter={handleDrag}
-          onDragOver={handleDrag}
-          onDragLeave={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`flex items-center gap-2 px-4 py-2 rounded-sm border border-dashed text-xs cursor-pointer transition-all ${
-            dragActive
-              ? "border-amber-500 bg-amber-500/10 text-white"
-              : "border-industrial bg-[#12151a] text-slate-300 hover:border-slate-500 hover:bg-[#1c2026]"
-          }`}
-        >
-          <Upload className="h-4 w-4 text-amber-500 shrink-0" />
-          <div className="text-left leading-tight">
-            <span className="font-semibold block uppercase tracking-wider text-[10px]">Upload CSV / JSON Log</span>
-            <span className="text-[9px] text-slate-500 font-mono uppercase tracking-tighter">Auto-normalizes and maps columns</span>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Advanced Cleaning Rule Trigger */}
+          <button
+            onClick={() => setShowCleaningRules(!showCleaningRules)}
+            className={`px-3 py-1.5 rounded-sm border text-[10px] font-mono font-bold uppercase transition flex items-center gap-1.5 cursor-pointer h-9 ${
+              showCleaningRules 
+                ? "bg-amber-500 text-black border-amber-500 font-bold" 
+                : "bg-[#12151a] text-slate-300 border-industrial hover:bg-[#1c2026]"
+            }`}
+            title="Configure advanced mapping and text replacement"
+          >
+            ⚙️ Ingestion Rules {showCleaningRules ? "[ACTIVE]" : ""}
+          </button>
+
+          {/* Drag and Drop File Uploader */}
+          <div
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`flex items-center gap-2 px-4 py-2 rounded-sm border border-dashed text-xs cursor-pointer transition-all h-9 ${
+              dragActive
+                ? "border-amber-500 bg-amber-500/10 text-white"
+                : "border-industrial bg-[#12151a] text-slate-300 hover:border-slate-500 hover:bg-[#1c2026]"
+            }`}
+          >
+            <Upload className="h-4 w-4 text-amber-500 shrink-0" />
+            <div className="text-left leading-tight">
+              <span className="font-semibold block uppercase tracking-wider text-[10px]">Upload CSV / JSON Log</span>
+              <span className="text-[9px] text-slate-500 font-mono uppercase tracking-tighter">Auto-normalizes and maps columns</span>
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".csv,.json"
+              className="hidden"
+            />
           </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".csv,.json"
-            className="hidden"
-          />
         </div>
       </div>
+
+      {/* Advanced Cleaning & Ingestion rules panel */}
+      {showCleaningRules && (
+        <div className="bg-[#12151a] border border-industrial p-4 rounded-sm mb-6 space-y-4">
+          <div className="pb-2 border-b border-industrial/50">
+            <h3 className="text-xs font-bold font-display uppercase tracking-wider text-slate-200">⚙️ Advanced Ingestion Rules & Data Cleaning</h3>
+            <p className="text-[10px] text-slate-500">Configure client-side timezone normalization, header overrides, and log value substitutions.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Column Header Overrides */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold font-mono text-slate-300 uppercase block">1. Custom Column Mapping</span>
+              <div className="space-y-1.5">
+                <div>
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Map Custom Tag Header</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. error_code (defaults to 'tag')"
+                    value={customTagCol}
+                    onChange={(e) => setCustomTagCol(e.target.value)}
+                    className="w-full bg-[#1c2026] text-slate-200 text-[11px] px-2.5 py-1 rounded-sm border border-industrial focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Map Custom Message Header</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. alarm_text (defaults to 'message')"
+                    value={customMsgCol}
+                    onChange={(e) => setCustomMsgCol(e.target.value)}
+                    className="w-full bg-[#1c2026] text-slate-200 text-[11px] px-2.5 py-1 rounded-sm border border-industrial focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Map Custom Time Header</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. log_time (defaults to 'timestamp')"
+                    value={customTimeCol}
+                    onChange={(e) => setCustomTimeCol(e.target.value)}
+                    className="w-full bg-[#1c2026] text-slate-200 text-[11px] px-2.5 py-1 rounded-sm border border-industrial focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Timezone normalization */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold font-mono text-slate-300 uppercase block">2. Timezone Correction</span>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-mono text-slate-500 block uppercase">Hour Offset Adjustment</label>
+                <select
+                  value={timezoneOffset}
+                  onChange={(e) => setTimezoneOffset(parseInt(e.target.value))}
+                  className="w-full bg-[#1c2026] text-slate-200 text-[11px] px-2.5 py-1.5 rounded-sm border border-industrial focus:outline-none focus:border-amber-500 font-mono"
+                >
+                  <option value={0}>No correction (Keep CSV raw timestamp)</option>
+                  <option value={-5}>-5 Hours (EST/EDT offset correction)</option>
+                  <option value={-8}>-8 Hours (PST/PDT offset correction)</option>
+                  <option value={1}>+1 Hour (CET offset correction)</option>
+                  <option value={2}>+2 Hours (EET offset correction)</option>
+                  <option value={8}>+8 Hours (SGT/CST offset correction)</option>
+                  <option value={9}>+9 Hours (JST offset correction)</option>
+                  <option value={-1}>-1 Hour</option>
+                  <option value={-2}>-2 Hours</option>
+                  <option value={-3}>-3 Hours</option>
+                  <option value={-4}>-4 Hours</option>
+                  <option value={-6}>-6 Hours</option>
+                  <option value={-7}>-7 Hours</option>
+                  <option value={3}>+3 Hours</option>
+                  <option value={4}>+4 Hours</option>
+                  <option value={5}>+5 Hours</option>
+                  <option value={6}>+6 Hours</option>
+                  <option value={7}>+7 Hours</option>
+                </select>
+                <p className="text-[9px] text-slate-500 leading-normal font-mono uppercase mt-1">
+                  Used if factory machines log in local timezone but database requires UTC timestamps.
+                </p>
+              </div>
+            </div>
+
+            {/* Keyword substitution rules */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold font-mono text-slate-300 uppercase block">3. Ingestion Value Substitutions</span>
+              <div className="space-y-1.5">
+                <div>
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Search String / Code</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ERR_SYS_1"
+                    value={substitutionFrom}
+                    onChange={(e) => setSubstitutionFrom(e.target.value)}
+                    className="w-full bg-[#1c2026] text-slate-200 text-[11px] px-2.5 py-1 rounded-sm border border-industrial focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Replace with Description</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. CONVEYOR_BELT_SLIP"
+                    value={substitutionTo}
+                    onChange={(e) => setSubstitutionTo(e.target.value)}
+                    className="w-full bg-[#1c2026] text-slate-200 text-[11px] px-2.5 py-1 rounded-sm border border-industrial focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+                <p className="text-[9px] text-slate-500 leading-normal font-mono uppercase mt-1">
+                  Replaces cryptic codes with human-readable alarm tags during ingestion.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1.5 border-b border-industrial pb-3">

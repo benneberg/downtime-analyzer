@@ -56,6 +56,78 @@ export default function PrecursorDetection({ plcAlarms, productionStops }: Precu
   const formatted5m = sortCloseness(within5m);
   const formatted10m = sortCloseness(within10m);
 
+  // Shift-Change Fatigue Prediction Calculations
+  const calculateShiftFatigue = () => {
+    if (productionStops.length === 0) return null;
+    const stop = productionStops[0];
+    const stopDate = new Date(stop.startTime);
+    
+    // Get UTC hours and minutes
+    const hours = stopDate.getUTCHours();
+    const minutes = stopDate.getUTCMinutes();
+    const totalMinutesOfDay = hours * 60 + minutes;
+
+    // Shift changes occur at:
+    // Morning shift change: 06:00 (360 mins)
+    // Afternoon shift change: 14:00 (840 mins)
+    // Night shift change: 22:00 (1320 mins)
+    const shiftChanges = [
+      { name: "Night-to-Morning Shift Transition", timeMins: 360, label: "06:00 UTC" },
+      { name: "Morning-to-Afternoon Shift Transition", timeMins: 840, label: "14:00 UTC" },
+      { name: "Afternoon-to-Night Shift Transition", timeMins: 1320, label: "22:00 UTC" }
+    ];
+
+    let minDiff = 1440; // max minutes in a day
+    let closestTransition = shiftChanges[0];
+
+    shiftChanges.forEach((sc) => {
+      // Calculate absolute difference considering day wrap-around
+      let diff = Math.abs(totalMinutesOfDay - sc.timeMins);
+      if (diff > 720) {
+        diff = 1440 - diff;
+      }
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestTransition = sc;
+      }
+    });
+
+    // Determine fatigue vulnerability threat rating
+    let riskLevel: "CRITICAL" | "WARNING" | "SAFE" = "SAFE";
+    let riskLabel = "Stable Operations - Low Fatigue Proximity";
+    let riskColor = "text-emerald-400 border-emerald-500/20 bg-emerald-950/10";
+    let riskIndicator = "bg-emerald-500";
+    let riskPercent = 15;
+
+    if (minDiff <= 30) {
+      riskLevel = "CRITICAL";
+      riskLabel = "High Handover Vulnerability - Transition Window Active";
+      riskColor = "text-rose-400 border-rose-500/30 bg-rose-950/20";
+      riskIndicator = "bg-rose-500";
+      riskPercent = 95;
+    } else if (minDiff <= 60) {
+      riskLevel = "WARNING";
+      riskLabel = "Moderate Proximity - Shift Overlap Buffer Active";
+      riskColor = "text-amber-400 border-amber-500/20 bg-amber-950/5";
+      riskIndicator = "bg-amber-500";
+      riskPercent = 65;
+    }
+
+    return {
+      hours,
+      minutes,
+      minDiff,
+      closestTransition,
+      riskLevel,
+      riskLabel,
+      riskColor,
+      riskIndicator,
+      riskPercent,
+    };
+  };
+
+  const fatigueResult = calculateShiftFatigue();
+
   return (
     <div className="bg-[#16191f] rounded-sm border border-industrial p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2 mb-4">
@@ -75,7 +147,7 @@ export default function PrecursorDetection({ plcAlarms, productionStops }: Precu
           No production stops configured. Please define a production stop to calculate precursors.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="bg-[#12151a] rounded-sm p-3 border border-industrial flex items-start gap-2.5">
             <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="text-[11px] text-slate-300">
@@ -178,6 +250,97 @@ export default function PrecursorDetection({ plcAlarms, productionStops }: Precu
               )}
             </div>
           </div>
+
+          {/* Shift-Change Transition Fatigue Predictor Panel */}
+          {fatigueResult && (
+            <div className="border-t border-industrial/60 pt-5 mt-4 space-y-4">
+              <div>
+                <h3 className="font-display text-sm font-bold text-slate-100 flex items-center gap-2 uppercase tracking-tight">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                  Shift-Change Transition Fatigue Predictor
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Correlating downtime occurrences with factory operator rotational transition buffers to identify coordination exhaustion patterns.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 bg-[#12151a] p-4 rounded-sm border border-industrial">
+                {/* Visual Risk Gauge Dial */}
+                <div className="bg-[#1c2026] p-4 rounded-sm border border-industrial/80 flex flex-col items-center justify-center text-center space-y-3">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Fatigue Vulnerability Index</span>
+                  
+                  {/* Custom Gauge Progress bar */}
+                  <div className="relative w-28 h-28 flex items-center justify-center">
+                    {/* SVG Progress Ring */}
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="56" cy="56" r="46" strokeWidth="6" stroke="#12151a" fill="transparent" />
+                      <circle
+                        cx="56"
+                        cy="56"
+                        r="46"
+                        strokeWidth="6"
+                        stroke={fatigueResult.riskLevel === "CRITICAL" ? "#ef4444" : fatigueResult.riskLevel === "WARNING" ? "#f59e0b" : "#10b981"}
+                        strokeDasharray={289}
+                        strokeDashoffset={289 - (289 * fatigueResult.riskPercent) / 100}
+                        strokeLinecap="round"
+                        fill="transparent"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-lg font-mono font-bold text-white">{fatigueResult.riskPercent}%</span>
+                      <span className="text-[8px] font-mono text-slate-500 uppercase">Threat Level</span>
+                    </div>
+                  </div>
+
+                  <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-sm border uppercase ${fatigueResult.riskColor}`}>
+                    {fatigueResult.riskLevel} RISK
+                  </span>
+                </div>
+
+                {/* Analytical Explanation */}
+                <div className="lg:col-span-2 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Proximity Context Analysis</span>
+                    <p className="text-xs text-slate-200">
+                      The current production stop started at{" "}
+                      <strong className="font-mono text-white">
+                        {String(fatigueResult.hours).padStart(2, "0")}:{String(fatigueResult.minutes).padStart(2, "0")} UTC
+                      </strong>
+                      , which is exactly{" "}
+                      <span className="text-amber-500 font-bold font-mono">{fatigueResult.minDiff} minutes</span> away from the closest{" "}
+                      <span className="text-white font-semibold">{fatigueResult.closestTransition.name} ({fatigueResult.closestTransition.label})</span>.
+                    </p>
+                    <div className="text-[11px] text-slate-400 leading-relaxed bg-[#1c2026] p-2.5 rounded-sm border border-industrial/50">
+                      <strong className="text-slate-200">Physiological Factor:</strong> Handover transition intervals represent a critical window for cognitive strain. Operators coming off an 8-hour shift suffer reduced reaction fidelity, while incoming teams inherit machine registers lacking comprehensive verbal orientation, compounding response lag.
+                    </div>
+                  </div>
+
+                  {/* Recommendations Actions */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block">Reliability Hardening Checklist</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <CheckCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                        <span>Enforce 15m shift overlaps</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <CheckCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                        <span>Digital pre-over checklist</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <CheckCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                        <span>Log state snapshots automatically</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-300">
+                        <CheckCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                        <span>Schedule high-risk audits post-transition</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
