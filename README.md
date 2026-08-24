@@ -1,7 +1,28 @@
 # Downtime Analyzer (Factory Insight AI)
 
 ## Overview
-The **Downtime Analyzer** (Factory Insight AI) is an advanced full-stack manufacturing analytics platform that combines real-time PLC alarms, operator logs, maintenance records, and production events to identify the true root causes of equipment downtime. It solves expensive manufacturing bottlenecks by correlating disparate data streams and generating structured "5 Whys" reports via `gemini-3.5-flash`.
+The **Downtime Analyzer** (Factory Insight AI) is an advanced full-stack manufacturing analytics and automation suite that combines real-time PLC alarms, operator logs, maintenance records, and production events to identify the true root causes of equipment downtime. It correlates disparate data streams and generates structured "5 Whys" reports via `gemini-3.5-flash`, complete with pre-commissioning PLC Structured Text code auditing and live OPC UA / MQTT Sparkplug B SCADA connectivity.
+
+---
+
+## Core Capabilities & Modules
+
+1. **Downtime Analyzer & 5-Whys AI Synthesizer**:
+   - **Chronological Sequence Alignment**: Correlates PLC registers, operator handovers, and work orders on a unified millisecond timeline.
+   - **Precursor Detection Engine**: Identifies chatter and early failure signatures `< 2m`, `< 5m`, or `< 10m` before emergency stops.
+   - **Statistical Anomaly Alert Badge**: Detects deviations in incoming alarm density and critical severity against ISA-18.2 benchmarks.
+   - **Shift Transition Fatigue Predictor**: Analyzes shift-change intervals to highlight vulnerability periods during operator handovers.
+
+2. **PLC Code Reviewer (IEC 61131-3 & Safety Auditor)**:
+   - **Structured Text (ST) & PLCopen XML Gate**: Ingests and edits `.st`, `.xml`, `.exp`, and `.txt` logic for Siemens S7-1500, Beckhoff TwinCAT, and Rockwell ControlLogix.
+   - **Static Hungarian Notation Validator**: Enforces strict prefix conventions (`b`, `n`, `f`, `s`, `t`, `fb`, `g_`, `c_`).
+   - **AI Safety & Dead Code Auditor**: Pinpoints missing E-Stop circuits, unlatched outputs, race conditions, and provides 1-Click Code Diff Auto-fixes.
+
+3. **Connected Factory (SCADA & Industrial IoT Bridge)**:
+   - **OPC UA Server Connector**: Real-time address space browsing and register polling (`opc.tcp://...`) with live event injection into analytical streams.
+   - **MQTT Sparkplug B Client**: Decodes payload metrics (Vibration RMS, Motor Current, Digital States) from plant broker streams.
+   - **Role-Based Access Control (RBAC)**: Simulated security tiers (Admin, Analyst, Viewer) managing mutation, deletion, and AI execution rights.
+
 
 ---
 

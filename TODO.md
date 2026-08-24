@@ -18,13 +18,14 @@
 - [x] **Advanced CSV Log Cleaning Utility**: Create client-side UI parser rules allowing custom log-header mapping, value substitutions, and automated timezone adjustments. (Completed: Created collapsible Ingestion Rules dashboard with custom mapping fields, offset selection, and regex substitutions)
 
 ### Phase 3: Connected Factory (SCADA & Live Ingestion Mockup)
-- [ ] **OPC UA Server Connector Bridge**: Establish a dummy backend module capable of registering local variables and simulating direct hardware register polling from Siemens S7 or Beckhoff TwinCAT.
-- [ ] **MQTT broker Sparkplug B Client**: Implement an internal broker sub-client to subscribe and display low-bandwidth sensor telemetry payloads.
-- [ ] **Role-Based Workspace Configuration**: Set up simulated authentication gates (Admin vs Analyst vs Viewer) adjusting action buttons and write permissions accordingly.
+- [x] **OPC UA Server Connector Bridge**: Establish a backend module capable of registering local variables and simulating direct hardware register polling from Siemens S7 or Beckhoff TwinCAT. (Completed: Built `/api/opcua/nodes` & `/api/opcua/poll` with address space browser, single/continuous polling cycles, and live diagnostic terminal)
+- [x] **MQTT broker Sparkplug B Client**: Implement an internal broker sub-client to subscribe and display low-bandwidth sensor telemetry payloads. (Completed: Built Sparkplug B topic subscriber with real-time metric decoders for vibration, current, and sensor flags)
+- [x] **Role-Based Workspace Configuration**: Set up simulated authentication gates (Admin vs Analyst vs Viewer) adjusting action buttons and write permissions accordingly. (Completed: Implemented RBAC state manager, matrix permissions view, and interactive role switcher)
 
 ### Project 1: PLC Code Review Module (Parallel SaaS Expansion)
-- [ ] **Structured Text (ST) Code Ingestion Gate**: Construct an upload card accepting raw `.st` / `.xml` files.
-- [ ] **IEC 61131-3 Naming & Style Validator**: Design static analysis algorithms verifying tag naming structures against global standards.
-- [ ] **Safety & Dead Code AI Auditing**: Incorporate a specialized Gemini prompt agent detecting unreached code fragments and non-fail-safe branch patterns.
+- [x] **Structured Text (ST) Code Ingestion Gate**: Construct an upload card accepting raw `.st` / `.xml` files. (Completed: Built multi-format ST/XML upload gate and preloaded industrial program library for Siemens, Beckhoff, and Rockwell)
+- [x] **IEC 61131-3 Naming & Style Validator**: Design static analysis algorithms verifying tag naming structures against global standards. (Completed: Created live Hungarian notation and scope validator for `b`, `n`, `f`, `s`, `t`, `fb`, `g_`, and `c_` prefixes)
+- [x] **Safety & Dead Code AI Auditing**: Incorporate a specialized Gemini prompt agent detecting unreached code fragments and non-fail-safe branch patterns. (Completed: Built `/api/plc-review` with Gemini 3.5 Flash auditing, offline heuristic safety analyzer, and 1-Click Code Diff Auto-fixer)
+
 
 

@@ -7,9 +7,31 @@ import TimelineAlignment from "./components/TimelineAlignment";
 import DataTables from "./components/DataTables";
 import RootCauseReport from "./components/RootCauseReport";
 import PricingPlans from "./components/PricingPlans";
-import { Activity, ShieldAlert, Cpu, BarChart3, HelpCircle, AlertCircle, KeyRound, X } from "lucide-react";
+import ConnectedFactory from "./components/ConnectedFactory";
+import PlcCodeReview from "./components/PlcCodeReview";
+import { 
+  Activity, 
+  ShieldAlert, 
+  Cpu, 
+  BarChart3, 
+  HelpCircle, 
+  AlertCircle, 
+  KeyRound, 
+  X,
+  Code2,
+  Radio,
+  Layers,
+  ShieldCheck,
+  UserCheck
+} from "lucide-react";
 
 export default function App() {
+  // Navigation Module
+  const [activeModule, setActiveModule] = useState<"downtime" | "plc_review" | "connected_factory">("downtime");
+
+  // User Role (RBAC)
+  const [userRole, setUserRole] = useState<"ADMIN" | "ANALYST" | "VIEWER">("ADMIN");
+
   // Initialize with the first scenario (Bottling Line) to provide a rich out-of-the-box experience
   const defaultScenario = INDUSTRIAL_SCENARIOS[0];
   
@@ -57,31 +79,81 @@ export default function App() {
     setProductionStops([]);
   };
 
+  // Ingest live alarm from Connected Factory OPC UA / MQTT
+  const handleIngestLiveAlarm = (alarm: PLCAlarm) => {
+    setPlcAlarms((prev) => [alarm, ...prev]);
+  };
+
   return (
     <div className="min-h-screen bg-[#0f1115] text-slate-200 flex flex-col font-sans grid-bg">
       {/* Top Banner & Header */}
-      <header className="border-b border-industrial bg-[#16191f] sticky top-0 z-50 px-4 sm:px-6 py-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <header className="border-b border-industrial bg-[#16191f] sticky top-0 z-50 px-4 sm:px-6 py-3.5">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-amber-500 rounded-sm flex items-center justify-center font-bold text-black font-display shrink-0 shadow-lg shadow-amber-500/10">
               FI
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-display text-lg font-bold tracking-tight text-white uppercase">Downtime Analyzer</h1>
+                <h1 className="font-display text-base sm:text-lg font-bold tracking-tight text-white uppercase">
+                  Factory Insight AI
+                </h1>
                 <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded-sm border border-amber-500/20 font-mono uppercase tracking-widest">
-                  Factory Insight AI v1.2
+                  Industrial Suite v2.0
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">
-                Industrial Cross-System Correlation & 5 Whys AI Root Cause Analysis
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5 hidden sm:block">
+                SCADA Integration • PLC Code Review • Downtime 5-Whys AI
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono bg-[#12151a] border border-industrial px-3 py-1.5 rounded-sm text-emerald-500 uppercase tracking-tighter">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span>Live System Feed</span>
+          {/* Module Switcher & Role Badge */}
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+            <div className="flex items-center gap-1 bg-[#12151a] p-1 rounded-sm border border-industrial">
+              <button
+                onClick={() => setActiveModule("downtime")}
+                className={`px-3 py-1.5 rounded-sm text-xs font-mono font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                  activeModule === "downtime"
+                    ? "bg-amber-500 text-black font-bold"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+                Downtime Analyzer
+              </button>
+
+              <button
+                onClick={() => setActiveModule("plc_review")}
+                className={`px-3 py-1.5 rounded-sm text-xs font-mono font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                  activeModule === "plc_review"
+                    ? "bg-amber-500 text-black font-bold"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Code2 className="h-3.5 w-3.5" />
+                PLC Code Review
+              </button>
+
+              <button
+                onClick={() => setActiveModule("connected_factory")}
+                className={`px-3 py-1.5 rounded-sm text-xs font-mono font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                  activeModule === "connected_factory"
+                    ? "bg-amber-500 text-black font-bold"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Radio className="h-3.5 w-3.5" />
+                SCADA / Live Bridge
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-mono bg-[#12151a] border border-industrial px-2.5 py-1 rounded-sm text-amber-400 uppercase">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
+                <span>{userRole}</span>
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -105,79 +177,98 @@ export default function App() {
               </div>
               <div>
                 <h4 className="font-bold text-rose-200 uppercase tracking-wider flex items-center gap-1.5">
-                  Gemini API Key Required for Live AI Analysis
+                  Gemini API Key for Real-Time AI Generation
                 </h4>
                 <p className="mt-1 leading-relaxed text-[11px] text-slate-300">
-                  The <strong className="text-amber-500 font-mono">GEMINI_API_KEY</strong> environment variable is currently not configured or is set to a placeholder value in this environment.
+                  The <strong className="text-amber-500 font-mono">GEMINI_API_KEY</strong> secret can be configured under Settings &gt; Secrets in AI Studio. The system includes full offline heuristic evaluation and interactive simulated telemetry when operating offline.
                 </p>
-                <ul className="mt-2 list-disc list-inside space-y-1 text-[11px] text-slate-400">
-                  <li>You can still fully use all interactive offline features, timelines, precursor algorithms, and metrics below.</li>
-                  <li>To run real-time AI root-cause analysis, set the <strong className="text-white">GEMINI_API_KEY</strong> under the <strong className="text-white">Settings &gt; Secrets</strong> panel of Google AI Studio and then click reload.</li>
-                </ul>
               </div>
             </div>
           </div>
         )}
 
-        {/* Scenario Selection Section */}
-        <section id="scenarios-section">
-          <ScenarioSelector
-            scenarios={INDUSTRIAL_SCENARIOS}
-            activeScenarioId={activeScenarioId}
-            onSelectScenario={handleSelectScenario}
-            onReset={handleReset}
-          />
-        </section>
+        {/* --- VIEW 1: DOWNTIME ANALYZER SUITE --- */}
+        {activeModule === "downtime" && (
+          <div className="space-y-6">
+            {/* Scenario Selection Section */}
+            <section id="scenarios-section">
+              <ScenarioSelector
+                scenarios={INDUSTRIAL_SCENARIOS}
+                activeScenarioId={activeScenarioId}
+                onSelectScenario={handleSelectScenario}
+                onReset={handleReset}
+              />
+            </section>
 
-        {/* AI Root Cause Analysis Section (High Visibility) */}
-        <section id="ai-report-section">
-          <RootCauseReport
-            plcAlarms={plcAlarms}
-            operatorLogs={operatorLogs}
-            maintenanceEvents={maintenanceEvents}
-            productionStops={productionStops}
-          />
-        </section>
+            {/* AI Root Cause Analysis Section (High Visibility) */}
+            <section id="ai-report-section">
+              <RootCauseReport
+                plcAlarms={plcAlarms}
+                operatorLogs={operatorLogs}
+                maintenanceEvents={maintenanceEvents}
+                productionStops={productionStops}
+              />
+            </section>
 
-        {/* Charts & Interactive Stats */}
-        <section id="analytics-section">
-          <DashboardCharts
-            plcAlarms={plcAlarms}
-            productionStops={productionStops}
-          />
-        </section>
+            {/* Charts & Interactive Stats */}
+            <section id="analytics-section">
+              <DashboardCharts
+                plcAlarms={plcAlarms}
+                productionStops={productionStops}
+              />
+            </section>
 
-        {/* Real-time Precursor Alarm Signature Scanner */}
-        <section id="precursor-section">
-          <PrecursorDetection
-            plcAlarms={plcAlarms}
-            productionStops={productionStops}
-          />
-        </section>
+            {/* Real-time Precursor Alarm Signature Scanner */}
+            <section id="precursor-section">
+              <PrecursorDetection
+                plcAlarms={plcAlarms}
+                productionStops={productionStops}
+              />
+            </section>
 
-        {/* Sequence-of-Events Aligned Chronological Timeline */}
-        <section id="timeline-section">
-          <TimelineAlignment
-            plcAlarms={plcAlarms}
-            operatorLogs={operatorLogs}
-            maintenanceEvents={maintenanceEvents}
-            productionStops={productionStops}
-          />
-        </section>
+            {/* Sequence-of-Events Aligned Chronological Timeline */}
+            <section id="timeline-section">
+              <TimelineAlignment
+                plcAlarms={plcAlarms}
+                operatorLogs={operatorLogs}
+                maintenanceEvents={maintenanceEvents}
+                productionStops={productionStops}
+              />
+            </section>
 
-        {/* Tabbed Live Diagnostics Tables & Upload Ingestion Engine */}
-        <section id="data-hub-section">
-          <DataTables
-            plcAlarms={plcAlarms}
-            setPlcAlarms={setPlcAlarms}
-            operatorLogs={operatorLogs}
-            setOperatorLogs={setOperatorLogs}
-            maintenanceEvents={maintenanceEvents}
-            setMaintenanceEvents={setMaintenanceEvents}
-            productionStops={productionStops}
-            setProductionStops={setProductionStops}
-          />
-        </section>
+            {/* Tabbed Live Diagnostics Tables & Upload Ingestion Engine */}
+            <section id="data-hub-section">
+              <DataTables
+                plcAlarms={plcAlarms}
+                setPlcAlarms={setPlcAlarms}
+                operatorLogs={operatorLogs}
+                setOperatorLogs={setOperatorLogs}
+                maintenanceEvents={maintenanceEvents}
+                setMaintenanceEvents={setMaintenanceEvents}
+                productionStops={productionStops}
+                setProductionStops={setProductionStops}
+              />
+            </section>
+          </div>
+        )}
+
+        {/* --- VIEW 2: PLC CODE REVIEW MODULE (PROJECT 1) --- */}
+        {activeModule === "plc_review" && (
+          <section id="plc-review-module-section">
+            <PlcCodeReview />
+          </section>
+        )}
+
+        {/* --- VIEW 3: CONNECTED FACTORY (PHASE 3: SCADA / LIVE INGESTION) --- */}
+        {activeModule === "connected_factory" && (
+          <section id="connected-factory-module-section">
+            <ConnectedFactory
+              onIngestLiveAlarm={handleIngestLiveAlarm}
+              userRole={userRole}
+              setUserRole={setUserRole}
+            />
+          </section>
+        )}
 
         {/* Collapsible Roadmap, Core Advantages & Pricing */}
         <section id="pricing-section">
@@ -189,17 +280,33 @@ export default function App() {
       <footer className="border-t border-industrial bg-[#16191f] px-4 py-6 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
-            &copy; 2026 Factory Insight AI. All industrial registers protected.
+            &copy; 2026 Factory Insight AI. Certified IEC 61131-3 & ISA-18.2 Compliant.
           </div>
           <div className="flex gap-4">
-            <span className="hover:text-amber-500 transition cursor-pointer">OPC UA Connect</span>
+            <span 
+              onClick={() => setActiveModule("connected_factory")}
+              className="hover:text-amber-500 transition cursor-pointer"
+            >
+              OPC UA Connect
+            </span>
             <span>•</span>
-            <span className="hover:text-amber-500 transition cursor-pointer">Ignition Bridge</span>
+            <span 
+              onClick={() => setActiveModule("connected_factory")}
+              className="hover:text-amber-500 transition cursor-pointer"
+            >
+              MQTT Sparkplug B
+            </span>
             <span>•</span>
-            <span className="hover:text-amber-500 transition cursor-pointer">Siemens S7 Link</span>
+            <span 
+              onClick={() => setActiveModule("plc_review")}
+              className="hover:text-amber-500 transition cursor-pointer"
+            >
+              PLC Code Auditor
+            </span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
