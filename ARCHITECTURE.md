@@ -1,62 +1,184 @@
-# System Architecture Specification
+schema:
+  version: 1
+  compatible_with:
+    - CCC
+  generated_by: Repository Bootstrap Prompt
+  generated_at: 2026-08-25T03:33:59-07:00
+  repository: 60f9b35f-3fa3-433e-b53d-4fc316191fc8
 
-## 1. Core Architectural Components
-The application is structured as a full-stack monolithic container architecture running a React 19 Single Page Application on the client and an Express Node.js application on the server.
-- **Client Application (Vite + React)**:
-  * `App.tsx`: Main application coordinator, houses root state indices.
-  * `ScenarioSelector.tsx`: Renders buttons allowing users to select or reset preloaded scenario states.
-  * `DashboardCharts.tsx`: Implements SVG layouts and Recharts displays representing active alarms.
-  * `PrecursorDetection.tsx`: Computes statistical precursor patterns.
-  * `TimelineAlignment.tsx`: Chronologically aligns mixed hardware and human records with specific offset indicators.
-  * `DataTables.tsx`: Displays interactive tables allowing file drops, CSV normalization, and direct log adjustments.
-  * `RootCauseReport.tsx`: Displays loading flows, parses, and formats the Gemini report responses.
-- **Backend Server (Express)**:
-  * `server.ts`: Entry point. Mounts Vite development middleware in non-production environments and hosts static `dist/` production assets. Exposes `/api/analyze` for Gemini processing.
+architecture_style:
+  value: "Full-Stack Single-Page Application (SPA) with API Gateway / Backend-For-Frontend (BFF)"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts (Express serving /api/* and acting as Vite middleware / static host)"
+    - "src/App.tsx (React SPA root managing client-side view routing)"
+  notes: ""
 
-*(Confidence: **High**)*
+major_components:
+  value:
+    - name: "Express API Server (server.ts)"
+      role: "Backend API gateway handling AI orchestration, PLC code review, and OPC UA / SCADA simulation"
+    - name: "Root Application Manager (src/App.tsx)"
+      role: "Top-level layout, module navigation, role-based state, and scenario hydration"
+    - name: "Downtime Analyzer Suite (src/components/RootCauseReport.tsx, TimelineAlignment.tsx, PrecursorDetection.tsx, DashboardCharts.tsx)"
+      role: "Cross-system event correlation, ISA-18.2 anomaly alerts, and 5-Whys generation"
+    - name: "PLC Code Review Module (src/components/PlcCodeReview.tsx)"
+      role: "IEC 61131-3 static validator and AI safety logic auditor"
+    - name: "Connected Factory Bridge (src/components/ConnectedFactory.tsx)"
+      role: "OPC UA polling engine and MQTT Sparkplug B client simulator"
+    - name: "Data Ingestion Hub (src/components/DataTables.tsx)"
+      role: "Tabbed record inspection, manual event entry, and CSV log parsing"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+    - "src/App.tsx"
+    - "src/components/*.tsx"
+  notes: ""
 
-## 2. System Data Flow
-The system operates on an active in-memory React state hierarchy representing the underlying industrial logs.
-- **Source of Truth**:
-  * **Primary**: Local client-side state inside `App.tsx` (`plcAlarms`, `operatorLogs`, `maintenanceEvents`, `productionStops`). When a user edits table entries or drops new files, this state is mutated.
-  * **Secondary / Reference**: Pre-packaged scenarios defined in `src/data/scenarios.ts`.
-- **API Request Lifecycle**:
-  1. Operator clicks "Generate AI Root Cause Report" in `RootCauseReport.tsx`.
-  2. Client-side logs are bundled into a request body payload and POSTed to `/api/analyze`.
-  3. Backend Express server parses the request body and constructs a comprehensive structured reliability-engineering prompt.
-  4. Prompt is dispatched to `gemini-3.5-flash` model.
-  5. Gemini outputs JSON matching the predefined structural contract.
-  6. Server parses/validates the JSON schema and returns it to the UI for immediate high-contrast rendering.
+responsibilities:
+  value:
+    - server_ts: "Securely proxies Gemini 3.5 Flash requests using server-side GEMINI_API_KEY, provides fallback heuristics when unconfigured, and serves static files"
+    - app_tsx: "Coordinates scenario selection, state lifting for alarm and stop records, and high-level role access"
+    - client_components: "Executes client-side filtering, decimation, mathematical baseline calculations, and UI rendering"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+    - "src/App.tsx"
+  notes: ""
 
-*(Confidence: **High**)*
+dependency_flow:
+  value:
+    - "Client Components -> src/data/scenarios.ts (Initial state)"
+    - "Client Components -> Backend /api/analyze (AI Root Cause)"
+    - "Client Components -> Backend /api/plc-review (AI/Static Code Review)"
+    - "Client Components -> Backend /api/opcua/* (Address Space & Polling)"
+    - "Backend (server.ts) -> Google GenAI SDK (@google/genai) -> Google Gemini API"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+    - "src/components/*.tsx"
+  notes: ""
 
-## 3. Integrations
-- **AI Integration**: Integrates with Google GenAI SDK (`@google/genai`) to call `gemini-3.5-flash` for high-speed analysis.
-- **Industrial Integrations (Roadmap)**: Future connectors are mapped for OPC UA, MQTT, and Ignition.
+data_flow:
+  value:
+    - "1. User selects preloaded scenario or uploads CSV logs into DataTables."
+    - "2. State is stored in React memory (plcAlarms, operatorLogs, maintenanceEvents, productionStops)."
+    - "3. Precursor scanner and timeline components compute cross-correlations synchronously in client."
+    - "4. User triggers 'Run AI Root Cause Analysis' or 'Run AI Safety Audit' -> POST request to Express backend."
+    - "5. Backend invokes Gemini 3.5 Flash (or runs heuristic fallback) and returns structured JSON."
+    - "6. UI renders formatted 5-Whys diagrams, corrective action tables, or code diffs."
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "src/components/RootCauseReport.tsx"
+    - "src/components/PlcCodeReview.tsx"
+    - "server.ts"
+  notes: ""
 
-*(Confidence: **High**)*
+source_of_truth:
+  value: "Client React state in App.tsx (in-memory, hydrated from src/data/scenarios.ts, CSV ingestion, or live OPC UA polling)"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "src/App.tsx (useState hooks for alarms, logs, stops, events)"
+  notes: ""
 
-## 4. Deployment Model
-- **Platform**: Designed to run inside standardized Docker/OCI containers on serverless platforms such as Cloud Run.
-- **Port Binding**: Binds directly to port `3000` on host `0.0.0.0` as routed by the container ingress reverse-proxy.
-- **Build Output**: Compiles client-side static bundles to `dist/` and compiles server-side code to a standalone CommonJS bundle (`dist/server.cjs`).
+entry_points:
+  value:
+    - backend: "server.ts (Express server listening on 0.0.0.0:3000)"
+    - frontend: "index.html -> src/main.tsx -> src/App.tsx"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "package.json"
+    - "index.html"
+    - "server.ts"
+  notes: ""
 
-*(Confidence: **High**)*
+external_systems:
+  value:
+    - system: "Google Gemini API (gemini-3.5-flash)"
+      protocol: "HTTPS / REST (via @google/genai SDK)"
+      status: "Optional (gracefully falls back to heuristic engine if GEMINI_API_KEY is unconfigured)"
+    - system: "Industrial SCADA / OPC UA & MQTT Broker"
+      protocol: "opc.tcp and mqtts (simulated via backend Express routes and client streaming)"
+      status: "Simulated"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+    - "src/components/ConnectedFactory.tsx"
+  notes: ""
 
-## 5. Observability
-- **Backend Logging**: Direct stdout logs noting server binding ports, environment variables, and raw API errors.
-- **Client Error Boundary**: Catch-blocks displaying real-time UI alerts, informing users of configuration issues or incorrect file schemas.
+extension_points:
+  value:
+    - "Additional PLC controllers and standards in src/components/PlcCodeReview.tsx SAMPLE_PROGRAMS"
+    - "Additional industrial scenarios in src/data/scenarios.ts INDUSTRIAL_SCENARIOS"
+    - "New telemetry protocols in src/components/ConnectedFactory.tsx"
+    - "Production database adapter replacing in-memory React state in App.tsx"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "src/data/scenarios.ts"
+    - "src/components/PlcCodeReview.tsx"
+  notes: ""
 
-*(Confidence: **Medium** - Needs a centralized database log system)*
+configuration:
+  value:
+    - "GEMINI_API_KEY: Process environment secret for AI synthesis"
+    - "PORT: Hardcoded to 3000 for container reverse proxy"
+    - "NODE_ENV: Determines development (Vite middleware) vs production (dist/ static files)"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+    - ".env.example"
+  notes: ""
 
-## 6. System Risks
-- **Rate-Limiting / Token Exhaustion**: Huge log uploads could hit token boundaries if arrays are not filtered or decimated before dispatching to the Gemini context window.
-- **Client Performance Degradation**: Browser rendering of large arrays of logs directly inside the DOM can cause UI lagging.
+constraints:
+  value:
+    - "Container ingress binds strictly to host 0.0.0.0 and port 3000"
+    - "Hot Module Replacement (HMR) is disabled in platform sandbox (DISABLE_HMR=true)"
+    - "Client runs in sandboxed iframe environment"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+    - "vite.config.ts"
+  notes: ""
 
-*(Confidence: **High**)*
+architecture_risks:
+  value:
+    - "In-memory client state does not persist across full browser page reloads unless exported"
+    - "API rate limits or network latency on external Gemini API calls during large payload analysis"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "src/App.tsx"
+    - "server.ts"
+  notes: ""
 
-## 7. Recommended Improvements
-- **Prompt Token Guard**: Add server-side check cutting log arrays to the latest 100 relevant entries if payload exceeds specific boundaries.
-- **Debounced Chart Calculations**: Ensure Recharts are only redrawn when a user stops modifying manual logs.
+improvement_opportunities:
+  value:
+    - "Implement persistent database storage (Firestore / PostgreSQL) for multi-shift historical logs"
+    - "Add automated end-to-end testing with Playwright or Vitest"
+    - "Implement native node-opcua or mqtt driver for live hardware integration in on-premise deployments"
+  evidence_state: INFERRED
+  confidence: HIGH
+  evidence:
+    - "ROADMAP.md"
+    - "TODO.md"
+  notes: ""
 
-*(Confidence: **High**)*
+unknown_areas:
+  value:
+    - "Target deployment container orchestrator beyond Cloud Run specifications"
+  evidence_state: OBSERVED
+  confidence: HIGH
+  evidence:
+    - "server.ts"
+  notes: ""

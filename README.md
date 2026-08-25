@@ -1,83 +1,99 @@
-# Downtime Analyzer (Factory Insight AI)
+# Factory Insight AI (Downtime Analyzer)
 
 ## Overview
-The **Downtime Analyzer** (Factory Insight AI) is an advanced full-stack manufacturing analytics and automation suite that combines real-time PLC alarms, operator logs, maintenance records, and production events to identify the true root causes of equipment downtime. It correlates disparate data streams and generates structured "5 Whys" reports via `gemini-3.5-flash`, complete with pre-commissioning PLC Structured Text code auditing and live OPC UA / MQTT Sparkplug B SCADA connectivity.
+Factory Insight AI is a full-stack industrial analytics and automation suite. It correlates real-time PLC alarm telemetry, manual operator shift logs, maintenance work orders, and production stop events to discover root causes of manufacturing downtime. The platform features automated 5-Whys AI report generation, statistical ISA-18.2 anomaly alerts, IEC 61131-3 Structured Text PLC code review, and SCADA (OPC UA / MQTT Sparkplug B) telemetry monitoring.
 
 ---
 
-## Core Capabilities & Modules
-
-1. **Downtime Analyzer & 5-Whys AI Synthesizer**:
-   - **Chronological Sequence Alignment**: Correlates PLC registers, operator handovers, and work orders on a unified millisecond timeline.
-   - **Precursor Detection Engine**: Identifies chatter and early failure signatures `< 2m`, `< 5m`, or `< 10m` before emergency stops.
-   - **Statistical Anomaly Alert Badge**: Detects deviations in incoming alarm density and critical severity against ISA-18.2 benchmarks.
-   - **Shift Transition Fatigue Predictor**: Analyzes shift-change intervals to highlight vulnerability periods during operator handovers.
-
-2. **PLC Code Reviewer (IEC 61131-3 & Safety Auditor)**:
-   - **Structured Text (ST) & PLCopen XML Gate**: Ingests and edits `.st`, `.xml`, `.exp`, and `.txt` logic for Siemens S7-1500, Beckhoff TwinCAT, and Rockwell ControlLogix.
-   - **Static Hungarian Notation Validator**: Enforces strict prefix conventions (`b`, `n`, `f`, `s`, `t`, `fb`, `g_`, `c_`).
-   - **AI Safety & Dead Code Auditor**: Pinpoints missing E-Stop circuits, unlatched outputs, race conditions, and provides 1-Click Code Diff Auto-fixes.
-
-3. **Connected Factory (SCADA & Industrial IoT Bridge)**:
-   - **OPC UA Server Connector**: Real-time address space browsing and register polling (`opc.tcp://...`) with live event injection into analytical streams.
-   - **MQTT Sparkplug B Client**: Decodes payload metrics (Vibration RMS, Motor Current, Digital States) from plant broker streams.
-   - **Role-Based Access Control (RBAC)**: Simulated security tiers (Admin, Analyst, Viewer) managing mutation, deletion, and AI execution rights.
-
+## Requirements
+- **Node.js**: >= 18.0.0
+- **npm** or **bun**
+- **Modern Web Browser**: Chrome, Firefox, Safari, or Edge
 
 ---
 
 ## Installation
+```bash
+npm install
+```
 
-1. **Clone and Install Dependencies**:
-   ```bash
-   npm install
-   ```
+---
 
-2. **Configure Environment Secrets**:
-   Create a `.env` file or set the secret in your container environment:
-   ```env
-   GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
-   ```
+## Configuration
+The application reads environment variables from `.env` or process environment:
+
+- `GEMINI_API_KEY`: *(Optional)* Google Gemini API key used by the backend Express server (`server.ts`) to generate real-time 5-Whys reports and PLC code audits via `@google/genai`. If unset, the system automatically falls back to built-in offline heuristic analysis.
+- `PORT`: `3000` *(Default backend port)*
+- `NODE_ENV`: Set to `production` in production mode to serve bundled static assets from `dist/`.
 
 ---
 
 ## Usage
 
-1. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-   This boots the backend Express server on port `3000` with the live Vite asset pipeline enabled.
+### Development Mode
+Starts the full-stack application with Vite middleware mounted on Express:
+```bash
+npm run dev
+```
+The application will be accessible at `http://localhost:3000`.
 
-2. **Core Workflows**:
-   - **Load Sandbox Scenarios**: Click on any of the preconfigured industrial incidents (Bottling Line Jam, Thermal Sealer Runaway, Conveyor Motor Overload) to load detailed cross-system test datasets.
-   - **Upload Custom Logs**: Drag-and-drop CSV or JSON logs into the tabular data hub. The engine automatically maps and normalizes column headers.
-   - **Identify Precursors**: View the statistics tab to identify indicators occurring `< 2m`, `< 5m`, or `< 10m` before equipment stoppage.
-   - **Generate Root-Cause Reports**: Direct server-side call prompts the Gemini model to synthesize all telemetry data, providing a complete "5 Whys" narrative.
+### Available Modules in UI
+1. **Downtime Analyzer**: Select preloaded industrial scenarios (Bottling Line, Packaging Line, CNC Cell), review unified sequence-of-events timelines, inspect precursor alarms, and trigger AI 5-Whys root cause analysis.
+2. **PLC Code Review**: Ingest or paste IEC 61131-3 Structured Text (`.st`, `.xml`), perform static Hungarian notation style checks, run AI safety audits, and apply 1-click refactored code diffs.
+3. **SCADA / Live Bridge (Connected Factory)**: Simulate OPC UA server address space browsing and register polling (`opc.tcp://...`), subscribe to MQTT Sparkplug B metric streams, and manage Role-Based Access Control (RBAC) permissions.
 
 ---
 
 ## Testing
+UNSET
 
-1. **Type and Lint Verification**:
-   Verify types and lint configurations using TypeScript:
-   ```bash
-   npm run lint
-   ```
+*(No automated test script is currently configured in `package.json`. Code verification is performed via `npm run lint` and `npm run build`.)*
 
 ---
 
-## Build / Deploy
+## Build
+To compile both the client-side single-page application and the backend server bundle:
+```bash
+npm run build
+```
+This runs:
+1. `vite build` — bundles frontend assets into `dist/`
+2. `esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs` — bundles the server into `dist/server.cjs`
 
-1. **Production Compilation**:
-   Compile frontend assets and bundle the server into a single production CommonJS target:
-   ```bash
-   npm run build
-   ```
+---
 
-2. **Run Production Container**:
-   Boot the compiled container web service:
-   ```bash
-   npm run start
-   ```
-   The backend server automatically binds to port `3000` on host `0.0.0.0`, serving static files from `dist/` and proxying API endpoints.
+## Deployment
+To launch the production server after building:
+```bash
+npm start
+```
+This executes `node dist/server.cjs`, serving the compiled static assets and API routes on port 3000.
+
+---
+
+## Repository Structure
+```
+├── .env.example               # Environment variable declaration template
+├── index.html                 # Frontend HTML shell
+├── metadata.json              # Platform application metadata
+├── package.json               # Dependencies and build scripts
+├── server.ts                  # Express backend & Vite middleware entry point
+├── tsconfig.json              # TypeScript compiler configuration
+├── vite.config.ts             # Vite build configuration
+├── src/
+│   ├── main.tsx               # Client React entry point
+│   ├── App.tsx                # Main workspace application component
+│   ├── index.css              # Global Tailwind CSS styling
+│   ├── data/
+│   │   └── scenarios.ts       # Preloaded manufacturing datasets & scenarios
+│   └── components/
+│       ├── ConnectedFactory.tsx    # OPC UA & MQTT Sparkplug B interface
+│       ├── DashboardCharts.tsx     # Recharts metrics & ISA-18.2 anomaly badges
+│       ├── DataTables.tsx          # Tabbed data grids & CSV ingestion rules
+│       ├── PlcCodeReview.tsx       # Structured Text IEC 61131-3 code reviewer
+│       ├── PrecursorDetection.tsx  # Pre-downtime micro-alarm scanner
+│       ├── PricingPlans.tsx        # Tier comparison & technical capabilities
+│       ├── RootCauseReport.tsx     # 5-Whys AI analysis report view
+│       ├── ScenarioSelector.tsx    # Scenario selection toolbar
+│       └── TimelineAlignment.tsx   # Sequence-of-events chronological view
+```
