@@ -1,24 +1,41 @@
 # Factory Insight AI (Downtime Analyzer)
 
+> Full-stack industrial analytics and automation suite for correlating PLC alarms, operator shift logs, and maintenance records to diagnose and prevent manufacturing downtime.
+
+[![CI Status](https://github.com/benneberg/downtime-analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/benneberg/downtime-analyzer/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+---
+
+## Status & Operational Scope
+
+> **Status:** `● Built`
+> **Deployment Target:** Containerized Node.js Runtime / Express + Vite Full-Stack Bundle
+
+---
+
 ## Overview
-Factory Insight AI is a full-stack industrial analytics and automation suite. It correlates real-time PLC alarm telemetry, manual operator shift logs, maintenance work orders, and production stop events to discover root causes of manufacturing downtime. The platform features automated 5-Whys AI report generation, statistical ISA-18.2 anomaly alerts, IEC 61131-3 Structured Text PLC code review, and SCADA (OPC UA / MQTT Sparkplug B) telemetry monitoring.
+
+Factory Insight AI correlates real-time telemetry, shift reports, and production stop events to discover root causes of manufacturing downtime. The platform features automated 5-Whys AI report generation, statistical ISA-18.2 anomaly alerts, IEC 61131-3 Structured Text PLC code review, and SCADA (OPC UA / MQTT Sparkplug B) telemetry monitoring.
 
 ---
 
 ## Requirements
-- **Node.js**: >= 18.0.0
+
+- **Node.js**: `>= 18.0.0`
 - **npm** or **bun**
 - **Modern Web Browser**: Chrome, Firefox, Safari, or Edge
 
 ---
 
 ## Installation
+
 ```bash
+git clone [https://github.com/benneberg/downtime-analyzer.git](https://github.com/benneberg/downtime-analyzer.git)
+cd downtime-analyzer
 npm install
+
 ```
-
----
-
 ## Configuration
 The application reads environment variables from `.env` or process environment:
 
