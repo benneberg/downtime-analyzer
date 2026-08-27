@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "generated": "2026-08-27 14:20 UTC",
+    "total_types": 5,
+    "note": "TypeScript type cross-reference. used_in lists files that explicitly import each type."
+  },
+  "types": {
+    "MaintenanceEvent": {
+      "defined_in": "src/data/scenarios.ts",
+      "kind": "interface",
+      "used_in": [
+        "src/App.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx"
+      ]
+    },
+    "OperatorLog": {
+      "defined_in": "src/data/scenarios.ts",
+      "kind": "interface",
+      "used_in": [
+        "src/App.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx"
+      ]
+    },
+    "PLCAlarm": {
+      "defined_in": "src/data/scenarios.ts",
+      "kind": "interface",
+      "used_in": [
+        "src/App.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/DashboardCharts.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx"
+      ]
+    },
+    "ProductionStop": {
+      "defined_in": "src/data/scenarios.ts",
+      "kind": "interface",
+      "used_in": [
+        "src/App.tsx",
+        "src/components/DashboardCharts.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx"
+      ]
+    },
+    "Scenario": {
+      "defined_in": "src/data/scenarios.ts",
+      "kind": "interface",
+      "used_in": [
+        "src/App.tsx",
+        "src/components/ScenarioSelector.tsx"
+      ]
+    }
+  }
+}

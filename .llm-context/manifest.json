@@ -1,0 +1,343 @@
+{
+  "version": "4",
+  "generated_at": "2026-08-27 14:20 UTC",
+  "project_fingerprint": "4b06bcdf008fdfdb",
+  "files": {
+    "routes.txt": {
+      "hash": "85261a8765fbb71b",
+      "size": 207,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts"
+      ],
+      "source_hashes": [
+        "09455e1c9737"
+      ],
+      "strategy": "if-changed"
+    },
+    "public-api.txt": {
+      "hash": "2412e117ec31ee05",
+      "size": 69,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [],
+      "source_hashes": [],
+      "strategy": "if-changed"
+    },
+    "tree.txt": {
+      "hash": "b7928fd2d0eb64f2",
+      "size": 1499,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [],
+      "source_hashes": [],
+      "strategy": "always"
+    },
+    "entry-points.json": {
+      "hash": "9fa560ac457cd97e",
+      "size": 103,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts"
+      ],
+      "source_hashes": [
+        "09455e1c9737"
+      ],
+      "strategy": "if-changed"
+    },
+    "dependency-graph.txt": {
+      "hash": "48b0384c5e268f7e",
+      "size": 127,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts",
+        "vite.config.ts",
+        "src/data/scenarios.ts",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/components/ScenarioSelector.tsx",
+        "src/components/PlcCodeReview.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx",
+        "src/components/PricingPlans.tsx",
+        "src/components/DashboardCharts.tsx"
+      ],
+      "source_hashes": [
+        "09455e1c9737",
+        "9c319043c257",
+        "104eecc863d3",
+        "207639fec4be",
+        "2b36426d5ad7",
+        "30c70f14b879",
+        "e6051b8c4fa0",
+        "3f968e8b0e83",
+        "7ef7fec4f913",
+        "1f464d4ce66c",
+        "00a849a36a1b",
+        "238514bc5671",
+        "587dee808a12",
+        "1eae2a5cf58c"
+      ],
+      "strategy": "if-changed"
+    },
+    "types-extracted.ts": {
+      "hash": "5c51dc9ed5300f2e",
+      "size": 1806,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "src/data/scenarios.ts"
+      ],
+      "source_hashes": [
+        "104eecc863d3"
+      ],
+      "strategy": "if-changed"
+    },
+    "symbol-index.json": {
+      "hash": "3cb0c514f0a92f89",
+      "size": 3054,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts",
+        "vite.config.ts",
+        "src/data/scenarios.ts",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/components/ScenarioSelector.tsx",
+        "src/components/PlcCodeReview.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx",
+        "src/components/PricingPlans.tsx",
+        "src/components/DashboardCharts.tsx"
+      ],
+      "source_hashes": [
+        "09455e1c9737",
+        "9c319043c257",
+        "104eecc863d3",
+        "207639fec4be",
+        "2b36426d5ad7",
+        "30c70f14b879",
+        "e6051b8c4fa0",
+        "3f968e8b0e83",
+        "7ef7fec4f913",
+        "1f464d4ce66c",
+        "00a849a36a1b",
+        "238514bc5671",
+        "587dee808a12",
+        "1eae2a5cf58c"
+      ],
+      "strategy": "if-changed"
+    },
+    "call-graph.json": {
+      "hash": "8642c6743ecd22aa",
+      "size": 330,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts",
+        "vite.config.ts",
+        "src/data/scenarios.ts",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/components/ScenarioSelector.tsx",
+        "src/components/PlcCodeReview.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx",
+        "src/components/PricingPlans.tsx",
+        "src/components/DashboardCharts.tsx"
+      ],
+      "source_hashes": [
+        "09455e1c9737",
+        "9c319043c257",
+        "104eecc863d3",
+        "207639fec4be",
+        "2b36426d5ad7",
+        "30c70f14b879",
+        "e6051b8c4fa0",
+        "3f968e8b0e83",
+        "7ef7fec4f913",
+        "1f464d4ce66c",
+        "00a849a36a1b",
+        "238514bc5671",
+        "587dee808a12",
+        "1eae2a5cf58c"
+      ],
+      "strategy": "always"
+    },
+    "dependency-graph.md": {
+      "hash": "b107868ac1b7859a",
+      "size": 88,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts",
+        "vite.config.ts",
+        "src/data/scenarios.ts",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/components/ScenarioSelector.tsx",
+        "src/components/PlcCodeReview.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx",
+        "src/components/PricingPlans.tsx",
+        "src/components/DashboardCharts.tsx"
+      ],
+      "source_hashes": [
+        "09455e1c9737",
+        "9c319043c257",
+        "104eecc863d3",
+        "207639fec4be",
+        "2b36426d5ad7",
+        "30c70f14b879",
+        "e6051b8c4fa0",
+        "3f968e8b0e83",
+        "7ef7fec4f913",
+        "1f464d4ce66c",
+        "00a849a36a1b",
+        "238514bc5671",
+        "587dee808a12",
+        "1eae2a5cf58c"
+      ],
+      "strategy": "if-changed"
+    },
+    "type-graph.json": {
+      "hash": "3c5d2b8edaf42e8f",
+      "size": 1772,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts",
+        "vite.config.ts",
+        "src/data/scenarios.ts",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/components/ScenarioSelector.tsx",
+        "src/components/PlcCodeReview.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx",
+        "src/components/PricingPlans.tsx",
+        "src/components/DashboardCharts.tsx"
+      ],
+      "source_hashes": [
+        "09455e1c9737",
+        "9c319043c257",
+        "104eecc863d3",
+        "207639fec4be",
+        "2b36426d5ad7",
+        "30c70f14b879",
+        "e6051b8c4fa0",
+        "3f968e8b0e83",
+        "7ef7fec4f913",
+        "1f464d4ce66c",
+        "00a849a36a1b",
+        "238514bc5671",
+        "587dee808a12",
+        "1eae2a5cf58c"
+      ],
+      "strategy": "always"
+    },
+    "change-surface.json": {
+      "hash": "d480548dd71c8018",
+      "size": 4853,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "server.ts",
+        "vite.config.ts",
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/components/ScenarioSelector.tsx",
+        "src/components/PlcCodeReview.tsx",
+        "src/components/DataTables.tsx",
+        "src/components/ConnectedFactory.tsx",
+        "src/components/PrecursorDetection.tsx",
+        "src/components/RootCauseReport.tsx",
+        "src/components/TimelineAlignment.tsx",
+        "src/components/PricingPlans.tsx",
+        "src/components/DashboardCharts.tsx",
+        "src/data/scenarios.ts"
+      ],
+      "source_hashes": [
+        "09455e1c9737",
+        "9c319043c257",
+        "207639fec4be",
+        "2b36426d5ad7",
+        "30c70f14b879",
+        "e6051b8c4fa0",
+        "3f968e8b0e83",
+        "7ef7fec4f913",
+        "1f464d4ce66c",
+        "00a849a36a1b",
+        "238514bc5671",
+        "587dee808a12",
+        "1eae2a5cf58c",
+        "104eecc863d3"
+      ],
+      "strategy": "always"
+    },
+    "env-shape.txt": {
+      "hash": "1aa8758f9847562b",
+      "size": 430,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        ".env.example"
+      ],
+      "source_hashes": [
+        "40ba4b4f7253"
+      ],
+      "strategy": "always"
+    },
+    "package.json": {
+      "hash": "389a43828eb4cb2b",
+      "size": 976,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [
+        "package.json"
+      ],
+      "source_hashes": [
+        "4a6d43e76839"
+      ],
+      "strategy": "always"
+    },
+    "external-dependencies.json": {
+      "hash": "ce1aec24a545fa52",
+      "size": 636,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [],
+      "source_hashes": [],
+      "strategy": "if-changed"
+    },
+    "capabilities.json": {
+      "hash": "f7644036a915f876",
+      "size": 5434,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [],
+      "source_hashes": [],
+      "strategy": "if-missing"
+    },
+    "../LLM.md": {
+      "hash": "4464302a831d2497",
+      "size": 2521,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [],
+      "source_hashes": [],
+      "strategy": "always"
+    },
+    "../ARCHITECTURE.md": {
+      "hash": "03550fc8599d595b",
+      "size": 404,
+      "generated_at": "2026-08-27 14:20 UTC",
+      "source_files": [],
+      "source_hashes": [],
+      "strategy": "if-missing"
+    }
+  }
+}

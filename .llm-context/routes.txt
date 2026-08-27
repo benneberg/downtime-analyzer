@@ -1,0 +1,11 @@
+# API Routes
+# Generated: 2026-08-27 14:20 UTC
+
+
+## server.ts
+  GET      /api/key-status
+  POST     /api/analyze
+  GET      /api/opcua/nodes
+  POST     /api/opcua/poll
+  POST     /api/plc-review
+  GET      *

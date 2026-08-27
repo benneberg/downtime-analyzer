@@ -1,0 +1,35 @@
+{
+  "service": "applet",
+  "repository": null,
+  "exposes": {
+    "api": [
+      "GET /api/key-status",
+      "GET /api/opcua/nodes",
+      "POST /api/analyze",
+      "POST /api/opcua/poll",
+      "POST /api/plc-review"
+    ],
+    "events": [],
+    "types": [
+      "MaintenanceEvent",
+      "OperatorLog",
+      "PLCAlarm",
+      "ProductionStop",
+      "Scenario"
+    ]
+  },
+  "depends_on": {
+    "services": [],
+    "apis_consumed": [],
+    "databases": [],
+    "message_queues": [],
+    "external_apis": []
+  },
+  "tags": [
+    "backend-api",
+    "frontend",
+    "typescript",
+    "ui"
+  ],
+  "detected_at": "2026-08-27 14:20 UTC"
+}

@@ -1,0 +1,133 @@
+{
+  "_meta": {
+    "generated": "2026-08-27 14:20 UTC",
+    "total_symbols": 25
+  },
+  "symbols": {
+    "GET /api/key-status": {
+      "file": "server.ts",
+      "line": 17,
+      "kind": "route"
+    },
+    "POST /api/analyze": {
+      "file": "server.ts",
+      "line": 24,
+      "kind": "route"
+    },
+    "GET /api/opcua/nodes": {
+      "file": "server.ts",
+      "line": 134,
+      "kind": "route"
+    },
+    "POST /api/opcua/poll": {
+      "file": "server.ts",
+      "line": 216,
+      "kind": "route"
+    },
+    "POST /api/plc-review": {
+      "file": "server.ts",
+      "line": 289,
+      "kind": "route"
+    },
+    "GET *": {
+      "file": "server.ts",
+      "line": 147,
+      "kind": "route"
+    },
+    "PLCAlarm": {
+      "file": "src/data/scenarios.ts",
+      "line": 1,
+      "kind": "interface"
+    },
+    "OperatorLog": {
+      "file": "src/data/scenarios.ts",
+      "line": 9,
+      "kind": "interface"
+    },
+    "MaintenanceEvent": {
+      "file": "src/data/scenarios.ts",
+      "line": 17,
+      "kind": "interface"
+    },
+    "ProductionStop": {
+      "file": "src/data/scenarios.ts",
+      "line": 26,
+      "kind": "interface"
+    },
+    "Scenario": {
+      "file": "src/data/scenarios.ts",
+      "line": 35,
+      "kind": "interface"
+    },
+    "ScenarioSelectorProps": {
+      "file": "src/components/ScenarioSelector.tsx",
+      "line": 5,
+      "kind": "interface"
+    },
+    "PLCReviewIssue": {
+      "file": "src/components/PlcCodeReview.tsx",
+      "line": 22,
+      "kind": "interface"
+    },
+    "PLCReviewAudit": {
+      "file": "src/components/PlcCodeReview.tsx",
+      "line": 31,
+      "kind": "interface"
+    },
+    "DataTablesProps": {
+      "file": "src/components/DataTables.tsx",
+      "line": 5,
+      "kind": "interface"
+    },
+    "TabType": {
+      "file": "src/components/DataTables.tsx",
+      "line": 16,
+      "kind": "type"
+    },
+    "ConnectedFactoryProps": {
+      "file": "src/components/ConnectedFactory.tsx",
+      "line": 24,
+      "kind": "interface"
+    },
+    "OPCUANode": {
+      "file": "src/components/ConnectedFactory.tsx",
+      "line": 30,
+      "kind": "interface"
+    },
+    "MQTTMessage": {
+      "file": "src/components/ConnectedFactory.tsx",
+      "line": 41,
+      "kind": "interface"
+    },
+    "PrecursorDetectionProps": {
+      "file": "src/components/PrecursorDetection.tsx",
+      "line": 6,
+      "kind": "interface"
+    },
+    "RootCauseReportProps": {
+      "file": "src/components/RootCauseReport.tsx",
+      "line": 6,
+      "kind": "interface"
+    },
+    "AIReport": {
+      "file": "src/components/RootCauseReport.tsx",
+      "line": 13,
+      "kind": "interface"
+    },
+    "TimelineAlignmentProps": {
+      "file": "src/components/TimelineAlignment.tsx",
+      "line": 5,
+      "kind": "interface"
+    },
+    "TimelineEvent": {
+      "file": "src/components/TimelineAlignment.tsx",
+      "line": 12,
+      "kind": "interface"
+    },
+    "DashboardChartsProps": {
+      "file": "src/components/DashboardCharts.tsx",
+      "line": 6,
+      "kind": "interface"
+    }
+  }
+}

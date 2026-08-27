@@ -1,0 +1,10 @@
+{
+  "_meta": {
+    "generated": "2026-08-27 14:20 UTC",
+    "total_functions": 5,
+    "connected_functions": 0,
+    "depth": 2,
+    "note": "Shows which functions call which others (2-level depth). Only includes functions with at least one internal connection. Use with symbol-index.json to trace call paths."
+  },
+  "graph": {}
+}
